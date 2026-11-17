@@ -1,0 +1,1651 @@
+<!doctype html>
+<html lang="id">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<meta name="color-scheme" content="light dark" />
+<link rel="icon" href="data:," />
+<title>Idle Life — Simulator Hidup</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&family=Archivo+Black&display=swap" rel="stylesheet">
+<style>
+  :root{
+    color-scheme: light;
+    --bg:#f4f1e6;
+    --bg-2:#ece7d3;
+    --surface:#ffffff;
+    --surface-2:#fbf9f1;
+    --ink:#17211b;
+    --ink-2:#4b5a50;
+    --ink-3:#7d8a80;
+    --line:#ddd6bd;
+    --green:#0e7a4f;
+    --green-dark:#0a5c3c;
+    --green-soft:#e2f2e7;
+    --gold:#f0b41c;
+    --gold-dark:#c98f04;
+    --gold-soft:#fdf0cd;
+    --red:#d64541;
+    --red-soft:#fde8e6;
+    --blue:#2563eb;
+    --blue-soft:#e3ebfd;
+    --shadow:0 10px 30px rgba(23,33,27,.10);
+    --radius:18px;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{
+      color-scheme: dark;
+      --bg:#0f1411;
+      --bg-2:#131a15;
+      --surface:#1a221c;
+      --surface-2:#202a22;
+      --ink:#eef3ec;
+      --ink-2:#b7c4b9;
+      --ink-3:#84937f;
+      --line:#2e3a30;
+      --green:#2fbf7f;
+      --green-dark:#25a76a;
+      --green-soft:#173527;
+      --gold:#f5bc2e;
+      --gold-dark:#d99e06;
+      --gold-soft:#3a2f10;
+      --red:#ff6b66;
+      --red-soft:#3d1e1c;
+      --blue:#7aa2ff;
+      --blue-soft:#1d2a4d;
+      --shadow:0 10px 30px rgba(0,0,0,.35);
+    }
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html{scroll-behavior:smooth}
+  body{
+    margin:0;background:var(--bg);color:var(--ink);
+    font-family:"Plus Jakarta Sans",system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+    padding-bottom:96px;
+  }
+  button{font-family:inherit;cursor:pointer;min-height:44px}
+  button:disabled{cursor:not-allowed;opacity:.48}
+  .wrap{max-width:1060px;margin:0 auto;padding:0 16px}
+
+  /* ===== Top money bar ===== */
+  .topbar{
+    position:sticky;top:0;z-index:40;
+    background:color-mix(in srgb, var(--bg) 88%, transparent);
+    backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);
+    border-bottom:1px solid var(--line);
+  }
+  .topbar-in{max-width:1060px;margin:0 auto;padding:10px 16px;display:flex;align-items:center;gap:14px;flex-wrap:wrap}
+  .money-block{min-width:0}
+  .money-label{font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3)}
+  .money-value{font-family:"Archivo Black",sans-serif;font-size:clamp(26px,5vw,38px);line-height:1;color:var(--green);letter-spacing:-.01em;white-space:nowrap}
+  .money-sub{display:flex;gap:8px;flex-wrap:wrap;margin-left:auto}
+  .pill{
+    display:inline-flex;align-items:center;gap:6px;background:var(--surface);border:1px solid var(--line);
+    border-radius:999px;padding:7px 12px;font-size:12.5px;font-weight:700;color:var(--ink-2);white-space:nowrap;
+  }
+  .pill b{color:var(--ink)}
+  .pill.gold{background:var(--gold-soft);border-color:color-mix(in srgb, var(--gold) 45%, var(--line));color:var(--ink)}
+  .reset-btn{
+    border:1px solid var(--line);background:var(--surface);color:var(--ink-2);border-radius:999px;
+    padding:0 14px;font-size:12.5px;font-weight:700;
+  }
+  .lang-switch{display:inline-flex;gap:4px;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:3px}
+  .lang-btn{border:0;background:transparent;color:var(--ink-2);border-radius:999px;padding:0 11px;font-size:12.5px;font-weight:800;min-height:30px}
+  .lang-btn.active{background:var(--green);color:#fff}
+
+  /* ===== Hero / stage ===== */
+  .stage{
+    margin-top:16px;border-radius:24px;overflow:hidden;border:1px solid var(--line);
+    background:linear-gradient(180deg,#a8d8ea 0%,#d9eef2 46%,#f3e9c8 46.2%,#e8d9a8 100%);
+    position:relative;box-shadow:var(--shadow);
+  }
+  @media (prefers-color-scheme: dark){
+    .stage{background:linear-gradient(180deg,#16283d 0%,#1d3a4a 46%,#3a3320 46.2%,#4a4025 100%)}
+  }
+  .stage-sky{position:absolute;inset:0 0 auto 0;height:46%;pointer-events:none}
+  .stage-inner{position:relative;padding:20px 18px 18px;display:grid;grid-template-columns:1fr;gap:14px}
+  @media(min-width:760px){.stage-inner{grid-template-columns:1.15fr .85fr;padding:26px 26px 22px}}
+  .tier-kicker{font-size:11px;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:#33505e}
+  @media (prefers-color-scheme: dark){.tier-kicker{color:#a9c6d4}}
+  .tier-name{font-family:"Archivo Black",sans-serif;font-size:clamp(28px,5.4vw,44px);line-height:.98;margin:6px 0 8px;color:#122019}
+  @media (prefers-color-scheme: dark){.tier-name{color:#f2f5ef}}
+  .tier-desc{font-size:14px;line-height:1.55;color:#2c4638;max-width:46ch;margin:0}
+  @media (prefers-color-scheme: dark){.tier-desc{color:#c9d6c6}}
+  .progress-wrap{margin-top:14px;background:rgba(255,255,255,.55);border:1px solid rgba(18,32,25,.14);border-radius:999px;padding:5px}
+  @media (prefers-color-scheme: dark){.progress-wrap{background:rgba(0,0,0,.28);border-color:rgba(255,255,255,.14)}}
+  .progress-bar{height:12px;border-radius:999px;background:rgba(18,32,25,.14);overflow:hidden}
+  .progress-fill{height:100%;width:0%;border-radius:999px;background:linear-gradient(90deg,var(--green),#39c07f);transition:width .35s ease}
+  .progress-text{font-size:12px;font-weight:700;color:#2c4638;margin-top:7px}
+  @media (prefers-color-scheme: dark){.progress-text{color:#c9d6c6}}
+
+  .avatar-card{
+    background:var(--surface);border:1px solid var(--line);border-radius:20px;padding:16px;
+    display:flex;flex-direction:column;align-items:center;text-align:center;position:relative;overflow:hidden;
+  }
+  .avatar-emoji{font-size:84px;line-height:1.05;filter:drop-shadow(0 10px 14px rgba(0,0,0,.18));user-select:none}
+  .avatar-job{font-weight:800;font-size:15px;margin-top:6px}
+  .avatar-edu{font-size:12.5px;color:var(--ink-2);margin-top:2px}
+  .float-layer{position:absolute;inset:0;pointer-events:none;overflow:hidden}
+  .float-num{
+    position:absolute;font-family:"Archivo Black",sans-serif;color:var(--green-dark);
+    font-size:22px;animation:floatUp 0.95s ease-out forwards;text-shadow:0 2px 0 rgba(255,255,255,.7);white-space:nowrap;
+  }
+  @media (prefers-color-scheme: dark){.float-num{color:#57e39f;text-shadow:0 2px 0 rgba(0,0,0,.5)}}
+  @keyframes floatUp{0%{opacity:0;transform:translateY(8px) scale(.85)}15%{opacity:1}100%{opacity:0;transform:translateY(-72px) scale(1.08)}}
+  @media (prefers-reduced-motion: reduce){.float-num{animation-duration:.01s}}
+
+  /* ===== Needs ===== */
+  .needs{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:14px}
+  @media(max-width:560px){.needs{grid-template-columns:1fr}}
+  .need-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px}
+  .need-head{display:flex;justify-content:space-between;align-items:baseline;gap:8px}
+  .need-title{font-weight:800;font-size:14px}
+  .need-val{font-weight:800;font-size:14px;color:var(--ink-2)}
+  .need-bar{height:10px;border-radius:999px;background:var(--bg-2);overflow:hidden;margin:9px 0 10px;border:1px solid var(--line)}
+  .need-fill{height:100%;border-radius:999px;transition:width .3s ease}
+  .need-fill.health{background:linear-gradient(90deg,#e0524d,#ff7a6b)}
+  .need-fill.happy{background:linear-gradient(90deg,#e79a06,#f5bc2e)}
+  .need-actions{display:flex;gap:8px;flex-wrap:wrap}
+  .mini-btn{
+    flex:1;min-width:118px;border-radius:12px;border:1px solid var(--line);background:var(--surface-2);
+    font-weight:700;font-size:12.5px;padding:8px 10px;color:var(--ink);line-height:1.35;
+  }
+  .mini-btn small{display:block;color:var(--ink-3);font-weight:600}
+  .warning{
+    display:none;margin-top:12px;border-radius:14px;padding:11px 14px;font-size:13px;font-weight:700;line-height:1.5;
+    background:var(--red-soft);color:var(--red);border:1px solid color-mix(in srgb, var(--red) 35%, var(--line));
+  }
+  .warning.show{display:block}
+
+  /* ===== Tap button ===== */
+  .tap-zone{display:flex;flex-direction:column;align-items:center;padding:22px 16px 6px}
+  .tap-btn{
+    width:min(248px,68vw);aspect-ratio:1;border-radius:50%;border:6px solid var(--gold-dark);
+    background:radial-gradient(circle at 32% 28%, #ffe27a 0%, var(--gold) 46%, #dd9d07 100%);
+    color:#4a3200;box-shadow:0 16px 34px rgba(201,143,4,.38), inset 0 -10px 0 rgba(0,0,0,.10);
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;
+    transition:transform .06s ease;user-select:none;touch-action:manipulation;padding:18px;
+  }
+  .tap-btn:active{transform:scale(.955)}
+  .tap-btn .coin{font-family:"Archivo Black",sans-serif;font-size:52px;line-height:1}
+  .tap-btn .tap-label{font-weight:900;font-size:15px;letter-spacing:.02em;text-align:center;line-height:1.25}
+  .tap-btn .tap-value{font-weight:800;font-size:13px;background:rgba(255,255,255,.55);border-radius:999px;padding:3px 10px;margin-top:4px}
+  .tap-hint{font-size:12.5px;color:var(--ink-3);font-weight:600;margin-top:12px;text-align:center}
+  .stats-row{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:14px}
+  .stat-chip{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:9px 14px;text-align:center;min-width:104px}
+  .stat-chip .v{font-weight:900;font-size:16px}
+  .stat-chip .l{font-size:11px;font-weight:700;color:var(--ink-3);text-transform:uppercase;letter-spacing:.08em}
+
+  /* ===== Farm: ayam & auto-ketuk ===== */
+  .farm{display:grid;grid-template-columns:1fr;gap:12px;margin-top:18px}
+  @media(min-width:700px){.farm{grid-template-columns:1fr 1fr}}
+  .farm-card{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px;display:flex;flex-direction:column;gap:8px}
+  .farm-card.chicken{border-color:color-mix(in srgb, var(--gold) 50%, var(--line));background:color-mix(in srgb, var(--gold-soft) 38%, var(--surface))}
+  .farm-head{display:flex;gap:12px;align-items:flex-start}
+  .farm-ico{width:48px;height:48px;flex:none;border-radius:14px;display:flex;align-items:center;justify-content:center;font-size:25px;background:var(--surface);border:1px solid var(--line)}
+  .farm-card h2{margin:0;font-size:16.5px;line-height:1.3}
+  .farm-card .desc{font-size:12.5px;color:var(--ink-2);line-height:1.55;margin:0}
+  .chicken-visual{font-size:26px;line-height:1.3;letter-spacing:2px;min-height:34px;user-select:none;word-break:break-all}
+  .farm-meta{display:flex;gap:6px;flex-wrap:wrap}
+  .farm .buy-btn{margin-top:auto}
+
+  /* ===== Tabs ===== */
+  .tabs{
+    position:sticky;bottom:0;z-index:40;margin-top:22px;
+  }
+  .tabs-in{
+    max-width:1060px;margin:0 auto;padding:0 16px;
+  }
+  .tabbar{
+    display:grid;grid-template-columns:repeat(4,1fr);gap:6px;background:var(--surface);
+    border:1px solid var(--line);border-radius:18px;padding:6px;box-shadow:var(--shadow);
+  }
+  .tab-btn{
+    border:0;border-radius:13px;background:transparent;color:var(--ink-2);
+    font-weight:800;font-size:13px;padding:10px 4px;line-height:1.3;min-height:52px;
+  }
+  .tab-btn .tab-ico{display:block;font-size:19px;line-height:1.2}
+  .tab-btn.active{background:var(--green);color:#fff}
+  @media(min-width:760px){.tab-btn{font-size:14px}.tab-btn .tab-ico{display:inline;font-size:16px;margin-right:5px}}
+
+  .panel{display:none;margin-top:18px}
+  .panel.active{display:block}
+  .panel-head{display:flex;align-items:flex-end;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:6px}
+  .panel-head h2{font-family:"Archivo Black",sans-serif;font-size:clamp(21px,3.6vw,28px);margin:0;line-height:1.05}
+  .panel-head p{margin:6px 0 0;color:var(--ink-2);font-size:13.5px;line-height:1.55;max-width:62ch}
+  .section-label{font-size:11px;font-weight:800;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-3);margin:20px 0 10px}
+
+  .cards{display:grid;grid-template-columns:1fr;gap:10px}
+  @media(min-width:700px){.cards{grid-template-columns:1fr 1fr}}
+  @media(min-width:1020px){.cards{grid-template-columns:1fr 1fr 1fr}}
+  .card{
+    background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:15px 16px;
+    display:flex;flex-direction:column;gap:7px;
+  }
+  .card.owned{border-color:color-mix(in srgb, var(--green) 45%, var(--line));background:color-mix(in srgb, var(--green-soft) 45%, var(--surface))}
+  .card.locked{opacity:.72}
+  .card-top{display:flex;gap:12px;align-items:flex-start}
+  .card-ico{
+    width:48px;height:48px;flex:none;border-radius:14px;display:flex;align-items:center;justify-content:center;
+    font-size:25px;background:var(--surface-2);border:1px solid var(--line);
+  }
+  .card h3{margin:0;font-size:15.5px;line-height:1.3}
+  .card .desc{font-size:12.5px;color:var(--ink-2);line-height:1.5;margin:0}
+  .badge{
+    margin-left:auto;flex:none;font-size:11px;font-weight:800;border-radius:999px;padding:4px 9px;
+    background:var(--gold-soft);color:var(--ink);border:1px solid color-mix(in srgb, var(--gold) 40%, var(--line));white-space:nowrap;
+  }
+  .badge.green{background:var(--green-soft);border-color:color-mix(in srgb, var(--green) 35%, var(--line))}
+  .badge.gray{background:var(--surface-2);color:var(--ink-3)}
+  .card-meta{display:flex;gap:6px;flex-wrap:wrap}
+  .meta-chip{font-size:11.5px;font-weight:700;background:var(--surface-2);border:1px solid var(--line);border-radius:999px;padding:4px 9px;color:var(--ink-2)}
+  .buy-btn{
+    margin-top:auto;border:0;border-radius:12px;background:var(--green);color:#fff;font-weight:800;font-size:14px;padding:11px 14px;width:100%;
+  }
+  .buy-btn:hover:not(:disabled){background:var(--green-dark)}
+  .buy-btn.secondary{background:var(--surface-2);color:var(--ink);border:1px solid var(--line)}
+  .buy-row{display:flex;gap:8px;margin-top:auto}
+  .buy-row .buy-btn{margin-top:0}
+  .req-text{font-size:12px;font-weight:700;color:var(--red)}
+  .req-text.ok{color:var(--green)}
+
+  /* Investments */
+  .portfolio{
+    background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:16px;
+    display:flex;gap:14px;flex-wrap:wrap;align-items:center;justify-content:space-between;
+  }
+  .portfolio .pv{font-family:"Archivo Black",sans-serif;font-size:26px;color:var(--green)}
+  .spark{display:flex;align-items:flex-end;gap:2px;height:26px;margin-top:4px}
+  .spark i{display:block;width:5px;border-radius:2px;background:var(--green);opacity:.75}
+  .price-up{color:var(--green);font-weight:800}
+  .price-down{color:var(--red);font-weight:800}
+
+  /* Log + achievements */
+  .log-box{background:var(--surface);border:1px solid var(--line);border-radius:var(--radius);padding:14px 16px;margin-top:18px}
+  .log-box h3{margin:0 0 8px;font-size:14px}
+  .log-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px;max-height:168px;overflow:auto}
+  .log-list li{font-size:12.5px;color:var(--ink-2);line-height:1.5;border-bottom:1px dashed var(--line);padding-bottom:6px}
+  .log-list li:last-child{border-bottom:0;padding-bottom:0}
+  .log-list b{color:var(--ink)}
+
+  .howto{margin-top:18px;background:var(--surface-2);border:1px dashed var(--line);border-radius:var(--radius);padding:16px 18px}
+  .howto h3{margin:0 0 8px;font-size:15px}
+  .howto ol{margin:0;padding-left:19px;display:flex;flex-direction:column;gap:5px}
+  .howto li{font-size:13px;line-height:1.55;color:var(--ink-2)}
+  .howto b{color:var(--ink)}
+  .foot{margin-top:16px;text-align:center;font-size:12px;color:var(--ink-3);line-height:1.6;padding:0 10px}
+
+  /* Toast */
+  .toasts{position:fixed;top:74px;left:50%;transform:translateX(-50%);z-index:80;display:flex;flex-direction:column;gap:8px;width:min(430px,calc(100vw - 28px));pointer-events:none}
+  .toast{
+    background:var(--ink);color:var(--bg);border-radius:14px;padding:12px 15px;font-size:13.5px;font-weight:700;line-height:1.45;
+    box-shadow:var(--shadow);animation:toastIn .25s ease;display:flex;gap:9px;align-items:flex-start;
+  }
+  .toast .t-ico{font-size:18px;line-height:1.2}
+  @keyframes toastIn{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:none}}
+  @media (prefers-reduced-motion: reduce){.toast{animation:none}}
+
+  /* Modal */
+  .modal-back{position:fixed;inset:0;background:rgba(10,15,12,.55);z-index:90;display:none;align-items:center;justify-content:center;padding:18px}
+  .modal-back.open{display:flex}
+  .modal{background:var(--surface);border-radius:20px;border:1px solid var(--line);max-width:420px;width:100%;padding:22px}
+  .modal h3{margin:0 0 8px;font-size:18px}
+  .modal p{margin:0 0 16px;font-size:13.5px;color:var(--ink-2);line-height:1.6}
+  .modal-row{display:flex;gap:8px}
+  .modal-row button{flex:1;border-radius:12px;font-weight:800;font-size:14px;padding:11px}
+  .btn-danger{background:var(--red);color:#fff;border:0}
+  .btn-ghost{background:var(--surface-2);color:var(--ink);border:1px solid var(--line)}
+</style>
+</head>
+<body>
+
+<div class="toasts" id="toasts" aria-live="polite"></div>
+
+<!-- ===== Money bar ===== -->
+<header class="topbar">
+  <div class="topbar-in">
+    <div class="money-block">
+      <div class="money-label" data-i18n="moneyLabel">Uang kamu</div>
+      <div class="money-value" id="moneyValue">$0</div>
+    </div>
+    <div class="money-sub">
+      <span class="pill gold"><span data-i18n="perClick">Per ketuk</span> <b id="perClickPill">$1</b></span>
+      <span class="pill"><span data-i18n="passive">Pasif</span> <b id="perSecPill">$0/dtk</b></span>
+      <span class="pill"><span data-i18n="totalEarned">Total dihasilkan</span> <b id="totalPill">$0</b></span>
+      <button class="reset-btn" id="resetBtn" type="button" data-i18n="resetTop">↺ Ulang dari nol</button>
+      <span class="lang-switch" role="group" aria-label="Bahasa / Language"><button class="lang-btn active" id="langIdBtn" type="button">🇮🇩 ID</button><button class="lang-btn" id="langEnBtn" type="button">🇬🇧 EN</button></span>
+    </div>
+  </div>
+</header>
+
+<main class="wrap">
+
+  <!-- ===== Stage ===== -->
+  <section class="stage" aria-label="Status hidup">
+    <svg class="stage-sky" viewBox="0 0 800 200" preserveAspectRatio="none" aria-hidden="true">
+      <g fill="rgba(18,32,25,.16)">
+        <rect x="20" y="90" width="52" height="110"/><rect x="86" y="60" width="38" height="140"/>
+        <rect x="560" y="70" width="46" height="130"/><rect x="620" y="40" width="34" height="160"/>
+        <rect x="668" y="95" width="56" height="105"/><rect x="470" y="105" width="40" height="95"/>
+      </g>
+      <circle cx="712" cy="38" r="22" fill="rgba(255,214,64,.85)"/>
+    </svg>
+    <div class="stage-inner">
+      <div>
+        <div class="tier-kicker" data-i18n="tierKicker">Status hidup saat ini</div>
+        <h1 class="tier-name" id="tierName">Gelandangan</h1>
+        <p class="tier-desc" id="tierDesc">Kamu mulai dari nol — tidur di emperan, dompet kosong. Modalmu: dua tangan, kemauan buat ketuk layar, dan 3 ayam pertamamu yang telurnya terjual sendiri.</p>
+        <div class="progress-wrap">
+          <div class="progress-bar"><div class="progress-fill" id="tierFill"></div></div>
+        </div>
+        <div class="progress-text" id="tierProgressText">Hasilkan $1.000 total buat naik kelas</div>
+      </div>
+      <div class="avatar-card" id="avatarCard">
+        <div class="float-layer" id="floatLayer"></div>
+        <div class="avatar-emoji" id="avatarEmoji">🧎</div>
+        <div class="avatar-job" id="avatarJob">Belum punya pekerjaan</div>
+        <div class="avatar-edu" id="avatarEdu">Tidak sekolah • Ketuk tombol emas buat mulai cari uang</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== Needs ===== -->
+  <div class="needs">
+    <div class="need-card">
+      <div class="need-head"><span class="need-title" data-i18n="health">❤️ Kesehatan</span><span class="need-val" id="healthVal">70/100</span></div>
+      <div class="need-bar"><div class="need-fill health" id="healthFill" style="width:70%"></div></div>
+      <div class="need-actions">
+        <button class="mini-btn" id="eatBtn" type="button"><span data-i18n="eat">🍚 Makan enak</span><small id="eatCost">Biaya $8 • +22 kesehatan</small></button>
+        <button class="mini-btn" id="doctorBtn" type="button"><span data-i18n="doctor">🏥 Ke dokter</span><small id="doctorCost">Biaya $120 • +55 kesehatan</small></button>
+      </div>
+    </div>
+    <div class="need-card">
+      <div class="need-head"><span class="need-title" data-i18n="happy">😊 Kebahagiaan</span><span class="need-val" id="happyVal">70/100</span></div>
+      <div class="need-bar"><div class="need-fill happy" id="happyFill" style="width:70%"></div></div>
+      <div class="need-actions">
+        <button class="mini-btn" id="funBtn" type="button"><span data-i18n="fun">🎮 Hiburan santai</span><small id="funCost">Biaya $10 • +22 bahagia</small></button>
+        <button class="mini-btn" id="tripBtn" type="button"><span data-i18n="trip">🏖️ Liburan</span><small id="tripCost">Biaya $250 • +60 bahagia</small></button>
+      </div>
+    </div>
+  </div>
+  <div class="warning" id="needWarning" data-i18n="needWarning">⚠️ Kesehatan atau kebahagiaanmu lagi kritis — penghasilanmu kepotong 50%. Makan, istirahat, atau hiburan dulu gih.</div>
+
+  <!-- ===== Tap zone ===== -->
+  <section class="tap-zone" aria-label="Kerja">
+    <button class="tap-btn" id="tapBtn" type="button" aria-label="Ketuk untuk bekerja dan dapat uang">
+      <span class="coin">$</span>
+      <span class="tap-label" id="tapLabel">KERJA<br>SERABUTAN</span>
+      <span class="tap-value" id="tapValue">+$1 per ketuk</span>
+    </button>
+    <div class="tap-hint" data-i18n="tapHint">Ketuk tombol emasnya buat cari duit. Capek ngetuk terus? Ayammu di bawah sudah menghasilkan uang sendiri dari telur, dan Auto-Ketuk bisa dibeli murah dari awal.</div>
+    <div class="stats-row">
+      <div class="stat-chip"><div class="v" id="statClicks">0</div><div class="l" data-i18n="statClicks">Total ketukan</div></div>
+      <div class="stat-chip"><div class="v" id="statBusiness">0</div><div class="l" data-i18n="statBiz">Bisnis dimiliki</div></div>
+      <div class="stat-chip"><div class="v" id="statMultiplier">×1,0</div><div class="l" data-i18n="statBonus">Bonus gaya hidup</div></div>
+      <div class="stat-chip"><div class="v" id="statTime">0 mnt</div><div class="l" data-i18n="statTime">Lama main sesi ini</div></div>
+      <div class="stat-chip"><div class="v" id="statChickens">3 🐔</div><div class="l" data-i18n="statChickens">Ayam dipelihara</div></div>
+      <div class="stat-chip"><div class="v" id="statAutoTap">Mati</div><div class="l" data-i18n="statAutoTap">Auto-ketuk</div></div>
+    </div>
+  </section>
+
+  <!-- ===== Kandang ayam & auto-ketuk ===== -->
+  <section class="farm" aria-label="Peternakan ayam dan auto-ketuk">
+    <div class="farm-card chicken">
+      <div class="farm-head">
+        <div class="farm-ico">🐔</div>
+        <div>
+          <h2 data-i18n="farmTitle">Kandang Ayam — Peliharaan Pertamamu</h2>
+          <p class="desc" data-i18n-html="farmDesc">Dari awal main kamu sudah pelihara ayam. Ayamnya bertelur <b>otomatis</b> dan telurnya <b>langsung terjual sendiri</b> — jadi ada penghasilan pasif tiap detik tanpa perlu kamu ketuk terus. Tambah ayamnya biar telur (dan duitnya) makin deras.</p>
+        </div>
+        <span class="badge green" id="chickenBadge">3 ekor</span>
+      </div>
+      <div class="chicken-visual" id="chickenVisual" aria-hidden="true">🐔🐔🐔</div>
+      <div class="farm-meta">
+        <span class="meta-chip">🥚 <span id="eggRate">Telur terjual otomatis</span></span>
+        <span class="meta-chip">💰 <span id="chickenIncomeVal">$0/dtk</span> dari telur</span>
+      </div>
+      <div class="buy-row">
+        <button class="buy-btn" type="button" id="buyChicken1">Beli 1 ayam — $50</button>
+        <button class="buy-btn secondary" type="button" id="buyChicken5">Beli 5 ayam</button>
+      </div>
+    </div>
+    <div class="farm-card">
+      <div class="farm-head">
+        <div class="farm-ico">🤖</div>
+        <div>
+          <h2 data-i18n="autoTapTitle">Auto-Ketuk — Biar Tangan Nggak Capek</h2>
+          <p class="desc" data-i18n-html="autoTapDesc">Robot kecil yang ngetuk tombol kerja buat kamu, otomatis tiap detik, senilai bayaran per ketukmu. Harganya murah dan bisa dibeli dari awal permainan — naikkan levelnya biar makin kencang.</p>
+        </div>
+        <span class="badge" id="autoTapBadge">Lv. 0</span>
+      </div>
+      <div class="farm-meta">
+        <span class="meta-chip">👆 <span id="autoTapRateVal">0 ketuk/dtk</span></span>
+        <span class="meta-chip">💰 <span id="autoTapIncomeVal">$0/dtk</span> dari auto-ketuk</span>
+      </div>
+      <button class="buy-btn" type="button" id="buyAutoTapBtn">Aktifkan Auto-Ketuk — $50</button>
+    </div>
+  </section>
+
+  <!-- ===== Tabs ===== -->
+  <nav class="tabs" aria-label="Menu game">
+    <div class="tabs-in">
+      <div class="tabbar" role="tablist">
+        <button class="tab-btn active" type="button" data-tab="career" role="tab"><span class="tab-ico">💼</span><span data-i18n="tabCareer">Karier &amp; Kuliah</span></button>
+        <button class="tab-btn" type="button" data-tab="life" role="tab"><span class="tab-ico">🏠</span><span data-i18n="tabLife">Gaya Hidup</span></button>
+        <button class="tab-btn" type="button" data-tab="business" role="tab"><span class="tab-ico">🏪</span><span data-i18n="tabBiz">Bisnis</span></button>
+        <button class="tab-btn" type="button" data-tab="invest" role="tab"><span class="tab-ico">📈</span><span data-i18n="tabInvest">Investasi</span></button>
+      </div>
+    </div>
+  </nav>
+
+  <!-- ===== Panel: Career ===== -->
+  <section class="panel active" id="panel-career">
+    <div class="panel-head">
+      <div>
+        <h2 data-i18n="careerTitle">Karier &amp; Pendidikan</h2>
+        <p data-i18n="careerDesc">Sekolah dulu biar bisa naik jabatan. Pekerjaan yang aktif nentuin bayaran per ketuk + gaji pasif tiap detik — kamu tetap dibayar walau lagi nggak ngetuk.</p>
+      </div>
+    </div>
+
+    <div class="section-label" data-i18n="secEdu">🎓 Pendidikan — beli berurutan</div>
+    <div class="cards" id="eduCards"></div>
+
+    <div class="section-label" data-i18n="secJobs">💼 Pekerjaan — pilih satu yang aktif</div>
+    <div class="cards" id="jobCards"></div>
+
+    <div class="section-label" data-i18n="secUpgrades">💪 Latihan &amp; alat kerja</div>
+    <div class="cards" id="upgradeCards"></div>
+  </section>
+
+  <!-- ===== Panel: Lifestyle ===== -->
+  <section class="panel" id="panel-life">
+    <div class="panel-head">
+      <div>
+        <h2 data-i18n="lifeTitle">Gaya Hidup</h2>
+        <p data-i18n="lifeDesc">Uang bukan cuma buat ditumpuk. Tempat tinggal, kendaraan, dan penampilan yang lebih baik bikin kesehatan &amp; kebahagiaan pulih sendiri — plus bonus penghasilan permanen.</p>
+      </div>
+    </div>
+    <div id="lifeSections"></div>
+  </section>
+
+  <!-- ===== Panel: Business ===== -->
+  <section class="panel" id="panel-business">
+    <div class="panel-head">
+      <div>
+        <h2 data-i18n="bizTitle">Bisnis — Mesin Uang Pasif</h2>
+        <p data-i18n="bizDesc">Ini jantungnya game idle: beli bisnis sekali, duitnya ngalir tiap detik selamanya. Beli unit yang sama berkali-kali — harganya naik 15% tiap unit, tapi penghasilannya numpuk terus.</p>
+      </div>
+      <span class="pill gold"><span data-i18n="bizTotal">Total pasif dari bisnis</span> <b id="bizIncomePill">$0/dtk</b></span>
+    </div>
+    <div class="cards" id="bizCards"></div>
+  </section>
+
+  <!-- ===== Panel: Invest ===== -->
+  <section class="panel" id="panel-invest">
+    <div class="panel-head">
+      <div>
+        <h2 data-i18n="investTitle">Investasi — Pasar Naik Turun</h2>
+        <p data-i18n="investDesc">Harga bergerak tiap 2 detik. Beli pas murah, jual pas mahal. Ada risiko rugi — jangan taruh semua uangmu di satu tempat.</p>
+      </div>
+    </div>
+    <div class="portfolio">
+      <div>
+        <div class="money-label" data-i18n="portfolioLabel">Nilai portofolio kamu</div>
+        <div class="pv" id="portfolioValue">$0</div>
+        <div style="font-size:12.5px;color:var(--ink-2);font-weight:700" id="portfolioPnl">Belum ada investasi</div>
+      </div>
+      <span class="pill"><span data-i18n="cashLabel">Uang tunai</span> <b id="cashPill">$0</b></span>
+    </div>
+    <div class="cards" id="assetCards" style="margin-top:12px"></div>
+  </section>
+
+  <!-- ===== Log ===== -->
+  <div class="log-box">
+    <h3 data-i18n="logTitle">📖 Catatan perjalanan hidupmu</h3>
+    <ul class="log-list" id="logList"></ul>
+  </div>
+
+  <div class="howto">
+    <h3 data-i18n="howtoTitle">Cara mainnya gampang banget</h3>
+    <ol>
+      <li data-i18n-html="howto1"><b>Ketuk tombol emas</b> buat kerja serabutan dan kumpulin uang pertama.</li>
+      <li data-i18n-html="howto2"><b>Ayam kamu kerja sendiri</b> — ayam bertelur otomatis dan telurnya terjual sendiri jadi penghasilan pasif sejak awal. Tambah jumlah ayam di Kandang Ayam biar makin deras.</li>
+      <li data-i18n-html="howto3"><b>Beli Auto-Ketuk</b> di kartu sebelah kandang — murah dan bisa dibeli dari awal, biar tombol kerja diketuk otomatis dan tanganmu nggak capek.</li>
+      <li data-i18n-html="howto4"><b>Sekolah &amp; naik jabatan</b> di tab Karier — bayaran per ketuk dan gaji detikannya naik jauh.</li>
+      <li data-i18n-html="howto5"><b>Beli bisnis</b> biar uang ngalir sendiri tiap detik, walau kamu lagi santai.</li>
+      <li data-i18n-html="howto6"><b>Jaga kesehatan &amp; kebahagiaan</b> — kalau dua-duanya anjlok, penghasilanmu kepotong setengah.</li>
+      <li data-i18n-html="howto7"><b>Upgrade gaya hidup &amp; investasi</b> buat ngebut dari gelandangan sampai jadi sultan.</li>
+    </ol>
+  </div>
+
+  <p class="foot"><span data-i18n="footLine1">Idle Life — game simulasi hidup versi web.</span><br><span data-i18n="footLine2">Progres tersimpan otomatis di browser ini</span><br>
+  <span style="display:inline-flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-top:8px">
+    <button class="reset-btn" id="exportSaveBtn" type="button" data-i18n="exportBtn">⬇️ Export Save</button>
+    <button class="reset-btn" id="importSaveBtn" type="button" data-i18n="importBtn">⬆️ Import Save</button>
+    <button class="reset-btn" id="resetBtnFooter" type="button" data-i18n="resetFooterBtn">Reset / Mulai dari Awal</button>
+  </span>
+  <input type="file" id="importSaveFile" accept=".json,application/json" hidden>
+  </p>
+</main>
+
+<!-- ===== Reset modal ===== -->
+<div class="modal-back" id="resetModal">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="resetTitle">
+    <h3 id="resetTitle" data-i18n="modalTitle">Mulai hidup baru?</h3>
+    <p data-i18n="modalBody">Semua uang, pekerjaan, bisnis, dan investasimu di sesi ini bakal hilang dan kamu balik jadi gelandangan $0. Yakin?</p>
+    <div class="modal-row">
+      <button class="btn-ghost" id="cancelReset" type="button" data-i18n="modalCancel">Batal</button>
+      <button class="btn-danger" id="confirmReset" type="button" data-i18n="modalConfirm">Ya, ulang dari nol</button>
+    </div>
+  </div>
+</div>
+
+<script>
+"use strict";
+/* ================= DATA ================= */
+var TIERS = [
+  { min: 0,        name: "Gelandangan",        name_en: "Homeless",        emoji: "🧎", desc: "Kamu mulai dari nol — tidur di emperan, dompet kosong. Modalmu: dua tangan, kemauan buat ketuk layar, dan 3 ayam pertamamu yang telurnya terjual sendiri.", desc_en: "You start from zero — sleeping in doorways, wallet empty. Your capital: two hands, the will to tap the screen, and your first 3 chickens whose eggs sell themselves." },
+  { min: 500,      name: "Pejuang Jalanan",    name_en: "Street Hustler",  emoji: "🚶", desc: "Udah bisa makan teratur dan sewa tempat berteduh. Jalanan ngajarin kamu satu hal: duit nggak datang sendiri.", desc_en: "You can eat regularly now and rent a shelter. The streets taught you one thing: money doesn't come on its own." },
+  { min: 5000,     name: "Pekerja Keras",      name_en: "Hard Worker",     emoji: "🧑‍🔧", desc: "Punya pekerjaan tetap dan kamar kos sendiri. Tetangga mulai nanya, “sekarang kerja di mana?”", desc_en: "You have a steady job and your own rented room. The neighbors are starting to ask, “where do you work now?”" },
+  { min: 50000,    name: "Kelas Menengah",     name_en: "Middle Class",    emoji: "🧑‍💼", desc: "Motor sendiri, kulkas penuh, bisa traktir keluarga. Hidup mulai terasa manusiawi.", desc_en: "Your own motorbike, a full fridge, you can treat the family. Life finally feels human." },
+  { min: 500000,   name: "Pengusaha Muda",     name_en: "Young Entrepreneur", emoji: "💼", desc: "Bisnismu jalan sendiri. Kamu nggak lagi jual waktu — kamu beli waktu orang lain.", desc_en: "Your business runs on its own. You no longer sell your time — you buy other people's time." },
+  { min: 5000000,  name: "Juragan Besar",      name_en: "Big Boss",        emoji: "🤵", desc: "Nama kamu dikenal di kota. Undangan acara bisnis datang lebih sering daripada tagihan.", desc_en: "Your name is known in town. Business event invitations arrive more often than bills." },
+  { min: 50000000, name: "Konglomerat",        name_en: "Tycoon",          emoji: "🎩", desc: "Gedung, pabrik, portofolio di mana-mana. Wartawan mulai nulis profil tentang kamu.", desc_en: "Buildings, factories, a portfolio everywhere. Journalists are starting to write profiles about you." },
+  { min: 500000000,name: "Miliuner",           name_en: "Billionaire",     emoji: "👑", desc: "Angka di rekeningmu udah kayak nomor telepon. Selamat — kamu menamatkan tangga hidup versi kerasnya.", desc_en: "The numbers in your account look like a phone number. Congratulations — you've beaten the hard version of the ladder of life." },
+  { min: 5000000000,name:"Sultan Sejati",      name_en: "True Sultan",     emoji: "🕌", desc: "Di atas miliuner masih ada langit: kamu. Sekarang tantangannya bukan cari uang, tapi mau diapain uang sebanyak ini.", desc_en: "Above billionaire there's still sky: you. Now the challenge isn't finding money, but what to do with this much of it." }
+];
+
+var EDUCATION = [
+  { name: "Lulus SD",            name_en: "Elementary School Graduate",   icon: "✏️", cost: 150,      desc: "Modal dasar baca-tulis-hitung. Membuka pekerjaan kasar yang lebih layak.", desc_en: "Basic reading, writing, and arithmetic. Unlocks more decent manual jobs." },
+  { name: "Lulus SMP",           name_en: "Middle School Graduate",      icon: "📐", cost: 900,      desc: "Mulai bisa kerja administrasi ringan dan jaga toko.", desc_en: "You can start doing light admin work and minding a shop." },
+  { name: "Lulus SMA / SMK",     name_en: "High School / Vocational Graduate", icon: "🎒", cost: 4500,     desc: "Syarat minimal kebanyakan lowongan kantoran dan kurir resmi.", desc_en: "The minimum requirement for most office jobs and official courier work." },
+  { name: "Diploma (D3)",        name_en: "Diploma (D3)",                icon: "🛠️", cost: 22000,    desc: "Skill teknis terpakai: teknisi, perawat, operator alat.", desc_en: "Usable technical skills: technician, nurse, machine operator." },
+  { name: "Sarjana (S1)",        name_en: "Bachelor's Degree (S1)",      icon: "🎓", cost: 110000,   desc: "Gerbang karier profesional: staf kantor, analis, supervisor.", desc_en: "The gateway to professional careers: office staff, analyst, supervisor." },
+  { name: "Magister (S2)",       name_en: "Master's Degree (S2)",        icon: "📚", cost: 600000,   desc: "Naik ke level manajer dan konsultan. Gajinya beda dunia.", desc_en: "Up to manager and consultant level. The pay is a different world." },
+  { name: "Doktor (S3)",         name_en: "Doctorate (S3)",              icon: "🔬", cost: 3500000,  desc: "Puncak akademik. Perusahaan berebut tanda tanganmu.", desc_en: "The academic peak. Companies fight over your signature." }
+];
+
+var JOBS = [
+  { name: "Pengamen Jalanan",   name_en: "Street Busker",        icon: "🎸", edu: -1, click: 1,    salary: 0,      desc: "Ngamen di lampu merah. Modal gitar dan muka tembok.", desc_en: "Busking at traffic lights. A guitar and a thick face are all you need." },
+  { name: "Tukang Parkir",      name_en: "Parking Attendant",    icon: "🅿️", edu: 0,  click: 3,    salary: 1,      desc: "Jaga parkiran minimarket. Setoran aman, tips lumayan.", desc_en: "Guarding a minimarket parking lot. Steady deposits, decent tips." },
+  { name: "Kuli Bangunan",      name_en: "Construction Worker",  icon: "🧱", edu: 0,  click: 5,    salary: 2,      desc: "Angkat semen dari pagi. Badan pegal, bayaran naik.", desc_en: "Hauling cement since morning. Aching body, rising pay." },
+  { name: "Penjaga Toko",       name_en: "Shopkeeper",           icon: "🏪", edu: 1,  click: 9,    salary: 5,      desc: "Jaga kasir dan etalase. AC dingin, kerja santai.", desc_en: "Minding the cashier and the shelves. Cold AC, easy work." },
+  { name: "Kurir Makanan",      name_en: "Food Courier",         icon: "🛵", edu: 2,  click: 16,   salary: 11,     desc: "Antar orderan se-kota. Makin ngebut, makin banyak order.", desc_en: "Delivering orders across town. The faster you go, the more orders you get." },
+  { name: "Teknisi Servis",     name_en: "Repair Technician",    icon: "🔧", edu: 3,  click: 30,   salary: 26,     desc: "Benerin AC, kulkas, mesin cuci. Skill-mu mahal sekarang.", desc_en: "Fixing ACs, fridges, washing machines. Your skills are expensive now." },
+  { name: "Staf Kantor",        name_en: "Office Staff",         icon: "🗂️", edu: 4,  click: 55,   salary: 55,     desc: "Kerja 9-ke-5 di ruangan ber-AC. Ada BPJS dan kopi gratis.", desc_en: "Working 9-to-5 in an air-conditioned room. There's health insurance and free coffee." },
+  { name: "Supervisor Tim",     name_en: "Team Supervisor",      icon: "📋", edu: 4,  click: 95,   salary: 110,    desc: "Kamu yang ngatur jadwal orang sekarang. Rapat, rapat, rapat.", desc_en: "You're the one scheduling people now. Meetings, meetings, meetings." },
+  { name: "Manajer Operasional",name_en: "Operations Manager",   icon: "🏢", edu: 5,  click: 180,  salary: 260,    desc: "Satu divisi di bawah komandomu. Bonus tahunan mulai terasa.", desc_en: "A whole division under your command. The annual bonus starts to feel real." },
+  { name: "Konsultan Bisnis",   name_en: "Business Consultant",  icon: "💡", edu: 5,  click: 320,  salary: 520,    desc: "Dibayar mahal cuma buat ngomong dan bikin slide. Enak juga.", desc_en: "Paid a lot just to talk and make slides. Not bad at all." },
+  { name: "Direktur Perusahaan",name_en: "Company Director",     icon: "👔", edu: 6,  click: 600,  salary: 1200,   desc: "Kursi paling atas di kantor. Keputusanmu = nasib ratusan orang.", desc_en: "The top chair in the office. Your decisions decide the fate of hundreds of people." },
+  { name: "CEO & Investor",     name_en: "CEO & Investor",       icon: "🚀", edu: 6,  click: 1200, salary: 3000,   desc: "Kamu nggak kerja buat uang lagi. Uang yang kerja buat kamu.", desc_en: "You no longer work for money. Money works for you." }
+];
+
+var UPGRADES = [
+  { id: "gloves", name: "Sarung Tangan Kerja", name_en: "Work Gloves",        icon: "🧤", baseCost: 60,     mult: 1.6, clickBonus: 1,  desc: "Tangan nggak lecet lagi. +1 per ketuk tiap level.", desc_en: "Your hands won't blister anymore. +1 per tap each level." },
+  { id: "tools",  name: "Peralatan Lengkap",   name_en: "Full Tool Set",      icon: "🧰", baseCost: 750,    mult: 1.65, clickBonus: 4,  desc: "Obeng sampai bor listrik. +4 per ketuk tiap level.", desc_en: "From screwdrivers to power drills. +4 per tap each level." },
+  { id: "course", name: "Kursus Skill Online", name_en: "Online Skill Course", icon: "💻", baseCost: 6000,   mult: 1.7, clickBonus: 14,  desc: "Belajar skill yang lagi dicari pasar. +14 per ketuk tiap level.", desc_en: "Learning skills the market wants. +14 per tap each level." },
+  { id: "mentor", name: "Mentor & Networking", name_en: "Mentor & Networking", icon: "🤝", baseCost: 60000,  mult: 1.75, clickBonus: 45,  desc: "Kenalan orang dalam di mana-mana. +45 per ketuk tiap level.", desc_en: "Knowing insiders everywhere. +45 per tap each level." },
+  { id: "brand",  name: "Personal Branding",   name_en: "Personal Branding",  icon: "📣", baseCost: 700000, mult: 1.8, clickBonus: 160, desc: "Nama kamu jadi merek. Klien datang sendiri. +160 per ketuk tiap level.", desc_en: "Your name becomes a brand. Clients come on their own. +160 per tap each level." }
+];
+
+var LIFESTYLE = [
+  { cat: "Tempat Tinggal", cat_en: "Housing", items: [
+    { name: "Emperan Toko",        name_en: "Shop Doorway",           icon: "🌃", cost: 0,       health: 0,    happy: 0,   bonus: 0,    desc: "Titik awal. Kardus jadi kasur.", desc_en: "The starting point. A cardboard box is your mattress." },
+    { name: "Kos Petak",           name_en: "Rented Room",            icon: "🛏️", cost: 800,     health: 0.06, happy: 0.05, bonus: 0.02, desc: "3×4 meter, kamar mandi luar. Akhirnya punya pintu.", desc_en: "3×4 metres, shared bathroom. You finally have a door." },
+    { name: "Kos Eksklusif",       name_en: "Premium Boarding Room",  icon: "🚿", cost: 9000,    health: 0.10, happy: 0.09, bonus: 0.04, desc: "AC, kamar mandi dalam, WiFi kencang.", desc_en: "AC, private bathroom, fast WiFi." },
+    { name: "Apartemen Studio",    name_en: "Studio Apartment",       icon: "🏢", cost: 90000,   health: 0.15, happy: 0.14, bonus: 0.07, desc: "View kota dari lantai 17. Pulang kerja terasa pulang.", desc_en: "A city view from the 17th floor. Coming home from work feels like coming home." },
+    { name: "Rumah Cluster",       name_en: "Gated Community House",  icon: "🏡", cost: 1200000, health: 0.22, happy: 0.20, bonus: 0.11, desc: "Halaman kecil, satpam 24 jam, tetangga sesama juragan.", desc_en: "A small yard, 24-hour security, neighbors who are fellow bosses." },
+    { name: "Mansion + Kolam",     name_en: "Mansion + Pool",         icon: "🏰", cost: 25000000,health: 0.35, happy: 0.32, bonus: 0.18, desc: "Rumah yang lebih mirip resort. Ada ruang khusus buat piala.", desc_en: "A house that's more like a resort. There's a special room for your trophies." }
+  ]},
+  { cat: "Kendaraan", cat_en: "Vehicles", items: [
+    { name: "Jalan Kaki",          name_en: "On Foot",                icon: "👟", cost: 0,       health: 0.02, happy: 0,    bonus: 0,    desc: "Gratis dan sehat, tapi lama.", desc_en: "Free and healthy, but slow." },
+    { name: "Sepeda Ontel",        name_en: "Old Bicycle",            icon: "🚲", cost: 400,     health: 0.05, happy: 0.04, bonus: 0.01, desc: "Nggak perlu bensin, perlu dengkul.", desc_en: "No petrol needed, just knees." },
+    { name: "Motor Matic Bekas",   name_en: "Used Automatic Scooter", icon: "🏍️", cost: 5000,    health: 0.03, happy: 0.08, bonus: 0.03, desc: "Irit, lincah, agak berisik. Kebebasan pertama.", desc_en: "Fuel-efficient, nimble, a bit noisy. Your first freedom." },
+    { name: "Motor Matic Baru",    name_en: "New Automatic Scooter",  icon: "🛵", cost: 45000,   health: 0.03, happy: 0.12, bonus: 0.05, desc: "Tinggal gas. Cicilan? Udah lunas, dong.", desc_en: "Just twist and go. Installments? Already paid off, of course." },
+    { name: "Mobil Keluarga",      name_en: "Family Car",             icon: "🚗", cost: 600000,  health: 0.05, happy: 0.18, bonus: 0.09, desc: "Mudik nggak desak-desakan lagi.", desc_en: "No more squeezing on the trip home for the holidays." },
+    { name: "Mobil Sport + Sopir", name_en: "Sports Car + Driver",    icon: "🏎️", cost: 15000000,health: 0.06, happy: 0.30, bonus: 0.16, desc: "Kamu duduk di belakang, mikir akuisisi berikutnya.", desc_en: "You sit in the back, thinking about your next acquisition." }
+  ]},
+  { cat: "Penampilan & Makan", cat_en: "Looks & Food", items: [
+    { name: "Baju Lusuh",          name_en: "Worn-Out Clothes",             icon: "👕", cost: 0,       health: 0,    happy: 0,    bonus: 0,    desc: "Tiga potong baju untuk semua acara.", desc_en: "Three outfits for every occasion." },
+    { name: "Baju Layak + Warteg", name_en: "Decent Clothes + Street Stall Meals", icon: "🍛", cost: 300,     health: 0.07, happy: 0.05, bonus: 0.01, desc: "Nasi rames tiap hari, baju ganti tiap hari.", desc_en: "Rice with side dishes every day, a fresh outfit every day." },
+    { name: "Outfit Rapi + Kafe",  name_en: "Smart Outfit + Café",          icon: "☕", cost: 3500,    health: 0.10, happy: 0.10, bonus: 0.03, desc: "Kemeja disetrika, kopi bukan sasetan lagi.", desc_en: "An ironed shirt, coffee that's no longer instant." },
+    { name: "Jas & Makan Sehat",   name_en: "Suit & Healthy Meals",         icon: "🥗", cost: 60000,   health: 0.16, happy: 0.14, bonus: 0.06, desc: "Meal plan katering sehat + jas yang pas badan.", desc_en: "A healthy catering meal plan + a suit that fits." },
+    { name: "Brand Mewah + Fine Dining", name_en: "Luxury Brands + Fine Dining", icon: "🍽️", cost: 2500000, health: 0.20, happy: 0.24, bonus: 0.12, desc: "Chef-nya kenal nama kamu. Jam tanganmu seharga motor orang.", desc_en: "The chef knows your name. Your watch costs as much as someone's motorbike." }
+  ]}
+];
+
+var BUSINESSES = [
+  { name: "Gerobak Kopi Keliling", name_en: "Mobile Coffee Cart",      icon: "☕", baseCost: 120,      income: 1.2,    desc: "Kopi saset diseduh di pinggir jalan. Laris manis.", desc_en: "Instant coffee brewed by the roadside. Selling like hot cakes." },
+  { name: "Warung Makan",          name_en: "Food Stall",              icon: "🍜", baseCost: 750,      income: 7,      desc: "Nasi campur langganan anak kos dan ojol.", desc_en: "Mixed rice, a favorite of boarding-house kids and couriers." },
+  { name: "Toko Online",           name_en: "Online Shop",             icon: "📦", baseCost: 3800,     income: 30,     desc: "Jualan di marketplace, packing tiap hari, cuan tiap jam.", desc_en: "Selling on marketplaces, packing every day, profit every hour." },
+  { name: "Laundry Kiloan",        name_en: "Laundry by the Kilo",     icon: "👔", baseCost: 18000,    income: 135,    desc: "Mesin cuci muter terus, uang ikut muter.", desc_en: "Washing machines spinning non-stop, money spinning along." },
+  { name: "Kafe Kekinian",         name_en: "Trendy Café",             icon: "🧋", baseCost: 95000,    income: 640,    desc: "Tempat nongkrong + WiFi. Antri sampai luar.", desc_en: "A hangout spot + WiFi. Queues stretch outside." },
+  { name: "Kos-kosan 20 Pintu",    name_en: "20-Room Boarding House",  icon: "🏘️", baseCost: 480000,   income: 3300,   desc: "Tiap awal bulan, 20 amplop sewa datang sendiri.", desc_en: "At the start of every month, 20 rent envelopes arrive on their own." },
+  { name: "Minimarket Franchise",  name_en: "Minimarket Franchise",   icon: "🏬", baseCost: 2400000,  income: 16500,  desc: "Buka 24 jam. Kamu tidur, kasir yang kerja.", desc_en: "Open 24 hours. You sleep while the cashier works." },
+  { name: "Startup Aplikasi",      name_en: "App Startup",             icon: "📱", baseCost: 14000000, income: 98000,  desc: "User naik terus, investor mulai melirik.", desc_en: "Users keep growing, investors are starting to look." },
+  { name: "Pabrik Garmen",         name_en: "Garment Factory",         icon: "🏭", baseCost: 85000000, income: 590000, desc: "Ratusan mesin jahit, ekspor ke tiga negara.", desc_en: "Hundreds of sewing machines, exports to three countries." },
+  { name: "Gedung Perkantoran",    name_en: "Office Building",         icon: "🏙️", baseCost: 550000000,income: 3900000,desc: "Satu gedung penuh penyewa korporat. Puncak properti komersial.", desc_en: "One building full of corporate tenants. The peak of commercial property." }
+];
+
+var ASSETS = [
+  { id: "emas",   name: "Emas Antam",     name_en: "Antam Gold",      icon: "🥇", startPrice: 100,   vol: 0.012, desc: "Aset aman klasik. Geraknya pelan, jarang bikin jantungan.", desc_en: "The classic safe asset. Moves slowly, rarely makes your heart race." },
+  { id: "saham",  name: "Saham Bluechip", name_en: "Blue-Chip Stocks", icon: "🏦", startPrice: 250,   vol: 0.03,  desc: "Saham perusahaan gede. Naik-turun wajar.", desc_en: "Shares of big companies. Normal ups and downs." },
+  { id: "kripto", name: "Koin Kripto",    name_en: "Crypto Coin",      icon: "🪙", startPrice: 80,    vol: 0.075, desc: "Bisa terbang 20%, bisa nyungsep 20%. Deg-degan maksimal.", desc_en: "Can fly 20%, can crash 20%. Maximum thrill." },
+  { id: "reksa",  name: "Reksa Teknologi",name_en: "Tech Fund",        icon: "🤖", startPrice: 420,   vol: 0.05,  desc: "Taruhan di perusahaan AI & teknologi. Sedang panas-panasnya.", desc_en: "A bet on AI & tech companies. It's hot right now." }
+];
+
+var ACHIEVEMENTS = [
+  { at: 100,       text: "Pecah telur! Total penghasilan tembus $100.", text_en: "First egg cracked! Total earnings passed $100." },
+  { at: 10000,     text: "Lima digit! Total penghasilan tembus $10K.", text_en: "Five digits! Total earnings passed $10K." },
+  { at: 250000,    text: "Seperempat juta dolar dihasilkan seumur hidup (di game ini).", text_en: "A quarter of a million dollars earned in a lifetime (in this game)." },
+  { at: 10000000,  text: "Dua digit juta! Kamu resmi masuk klub orang kaya beneran.", text_en: "Double-digit millions! You're officially in the real rich people's club." },
+  { at: 1000000000,text: "SATU MILIAR total penghasilan. Legenda jalanan jadi legenda beneran.", text_en: "ONE BILLION in total earnings. A street legend becomes a real legend." }
+];
+
+/* ============ AYAM & AUTO-KETUK (aktivitas awal) ============ */
+/* Ayam: peliharaan pertama pemain. Bertelur otomatis, telur terjual
+   sendiri = penghasilan pasif sejak awal, tanpa harus klik terus. */
+var CHICKEN = { startCount: 3, baseCost: 30, costMult: 1.18, income: 0.6 };
+/* Auto-ketuk: upgrade terpisah dari 5 upgrade alat. Murah di awal,
+   tiap level +1 ketuk otomatis per detik senilai bayaran per ketuk. */
+var AUTOTAP = { baseCost: 50, costMult: 1.85, maxLevel: 10, tapsPerLevel: 1 };
+
+/* ================= BAHASA (ID / EN) ================= */
+/* Pilihan bahasa tersimpan di localStorage (key terpisah) dan ikut
+   tersimpan di file export save (field lang) — save lama tanpa field
+   lang tetap bisa di-load (default Indonesia). */
+var LANG_KEY = "idleLifeLang";
+var lang = "id";
+try {
+  var _savedLang = localStorage.getItem(LANG_KEY);
+  if (_savedLang === "en" || _savedLang === "id") lang = _savedLang;
+} catch (e) { /* penyimpanan tidak tersedia — pakai default ID */ }
+
+var I18N = {
+  docTitle: { id: "Idle Life — Simulator Hidup", en: "Idle Life — Life Simulator" },
+  moneyLabel: { id: "Uang kamu", en: "Your money" },
+  perClick: { id: "Per ketuk", en: "Per tap" },
+  passive: { id: "Pasif", en: "Passive" },
+  totalEarned: { id: "Total dihasilkan", en: "Total earned" },
+  resetTop: { id: "↺ Ulang dari nol", en: "↺ Start over" },
+  tierKicker: { id: "Status hidup saat ini", en: "Your current life status" },
+  health: { id: "❤️ Kesehatan", en: "❤️ Health" },
+  happy: { id: "😊 Kebahagiaan", en: "😊 Happiness" },
+  eat: { id: "🍚 Makan enak", en: "🍚 Eat well" },
+  doctor: { id: "🏥 Ke dokter", en: "🏥 See a doctor" },
+  fun: { id: "🎮 Hiburan santai", en: "🎮 Relax & play" },
+  trip: { id: "🏖️ Liburan", en: "🏖️ Vacation" },
+  needWarning: { id: "⚠️ Kesehatan atau kebahagiaanmu lagi kritis — penghasilanmu kepotong 50%. Makan, istirahat, atau hiburan dulu gih.", en: "⚠️ Your health or happiness is critical — your income is cut by 50%. Eat, rest, or have some fun first." },
+  tapDefault: { id: "KERJA<br>SERABUTAN", en: "ODD<br>JOBS" },
+  tapHint: { id: "Ketuk tombol emasnya buat cari duit. Capek ngetuk terus? Ayammu di bawah sudah menghasilkan uang sendiri dari telur, dan Auto-Ketuk bisa dibeli murah dari awal.", en: "Tap the golden button to earn money. Tired of tapping? Your chickens below already earn money on their own from eggs, and Auto-Tap can be bought cheaply from the very start." },
+  statClicks: { id: "Total ketukan", en: "Total taps" },
+  statBiz: { id: "Bisnis dimiliki", en: "Businesses owned" },
+  statBonus: { id: "Bonus gaya hidup", en: "Lifestyle bonus" },
+  statTime: { id: "Lama main sesi ini", en: "Session play time" },
+  statChickens: { id: "Ayam dipelihara", en: "Chickens kept" },
+  statAutoTap: { id: "Auto-ketuk", en: "Auto-tap" },
+  farmTitle: { id: "Kandang Ayam — Peliharaan Pertamamu", en: "Chicken Coop — Your First Pets" },
+  farmDesc: { id: "Dari awal main kamu sudah pelihara ayam. Ayamnya bertelur <b>otomatis</b> dan telurnya <b>langsung terjual sendiri</b> — jadi ada penghasilan pasif tiap detik tanpa perlu kamu ketuk terus. Tambah ayamnya biar telur (dan duitnya) makin deras.", en: "You've kept chickens since the very start. They lay eggs <b>automatically</b> and the eggs <b>sell themselves right away</b> — so you earn passive income every second without tapping. Add more chickens so the eggs (and the money) flow faster." },
+  autoTapTitle: { id: "Auto-Ketuk — Biar Tangan Nggak Capek", en: "Auto-Tap — So Your Fingers Don't Get Tired" },
+  autoTapDesc: { id: "Robot kecil yang ngetuk tombol kerja buat kamu, otomatis tiap detik, senilai bayaran per ketukmu. Harganya murah dan bisa dibeli dari awal permainan — naikkan levelnya biar makin kencang.", en: "A little robot that taps the work button for you, automatically every second, earning your per-tap pay. It's cheap and can be bought from the very start of the game — raise its level to make it faster." },
+  tabCareer: { id: "Karier & Kuliah", en: "Career & School" },
+  tabLife: { id: "Gaya Hidup", en: "Lifestyle" },
+  tabBiz: { id: "Bisnis", en: "Business" },
+  tabInvest: { id: "Investasi", en: "Investments" },
+  careerTitle: { id: "Karier & Pendidikan", en: "Career & Education" },
+  careerDesc: { id: "Sekolah dulu biar bisa naik jabatan. Pekerjaan yang aktif nentuin bayaran per ketuk + gaji pasif tiap detik — kamu tetap dibayar walau lagi nggak ngetuk.", en: "Study first so you can climb the career ladder. Your active job sets your pay per tap + passive salary every second — you still get paid even when you're not tapping." },
+  secEdu: { id: "🎓 Pendidikan — beli berurutan", en: "🎓 Education — buy in order" },
+  secJobs: { id: "💼 Pekerjaan — pilih satu yang aktif", en: "💼 Jobs — pick one active job" },
+  secUpgrades: { id: "💪 Latihan & alat kerja", en: "💪 Training & work tools" },
+  lifeTitle: { id: "Gaya Hidup", en: "Lifestyle" },
+  lifeDesc: { id: "Uang bukan cuma buat ditumpuk. Tempat tinggal, kendaraan, dan penampilan yang lebih baik bikin kesehatan & kebahagiaan pulih sendiri — plus bonus penghasilan permanen.", en: "Money isn't just for hoarding. A better home, vehicle, and appearance make your health & happiness recover on their own — plus a permanent income bonus." },
+  bizTitle: { id: "Bisnis — Mesin Uang Pasif", en: "Business — Passive Money Machine" },
+  bizDesc: { id: "Ini jantungnya game idle: beli bisnis sekali, duitnya ngalir tiap detik selamanya. Beli unit yang sama berkali-kali — harganya naik 15% tiap unit, tapi penghasilannya numpuk terus.", en: "This is the heart of an idle game: buy a business once and the money flows every second, forever. Buy the same unit again and again — the price rises 15% per unit, but the income keeps stacking." },
+  bizTotal: { id: "Total pasif dari bisnis", en: "Total passive from business" },
+  investTitle: { id: "Investasi — Pasar Naik Turun", en: "Investing — A Market That Goes Up and Down" },
+  investDesc: { id: "Harga bergerak tiap 2 detik. Beli pas murah, jual pas mahal. Ada risiko rugi — jangan taruh semua uangmu di satu tempat.", en: "Prices move every 2 seconds. Buy when it's cheap, sell when it's high. There's a risk of losing — don't put all your money in one place." },
+  portfolioLabel: { id: "Nilai portofolio kamu", en: "Your portfolio value" },
+  cashLabel: { id: "Uang tunai", en: "Cash" },
+  logTitle: { id: "📖 Catatan perjalanan hidupmu", en: "📖 Your life journey log" },
+  howtoTitle: { id: "Cara mainnya gampang banget", en: "How to play — super easy" },
+  howto1: { id: "<b>Ketuk tombol emas</b> buat kerja serabutan dan kumpulin uang pertama.", en: "<b>Tap the golden button</b> to do odd jobs and collect your first money." },
+  howto2: { id: "<b>Ayam kamu kerja sendiri</b> — ayam bertelur otomatis dan telurnya terjual sendiri jadi penghasilan pasif sejak awal. Tambah jumlah ayam di Kandang Ayam biar makin deras.", en: "<b>Your chickens work on their own</b> — they lay eggs automatically and the eggs sell themselves as passive income from the start. Add more chickens in the Chicken Coop to make it flow faster." },
+  howto3: { id: "<b>Beli Auto-Ketuk</b> di kartu sebelah kandang — murah dan bisa dibeli dari awal, biar tombol kerja diketuk otomatis dan tanganmu nggak capek.", en: "<b>Buy Auto-Tap</b> in the card next to the coop — cheap and available from the start, so the work button gets tapped automatically and your fingers don't get tired." },
+  howto4: { id: "<b>Sekolah & naik jabatan</b> di tab Karier — bayaran per ketuk dan gaji detikannya naik jauh.", en: "<b>Study & climb the ladder</b> in the Career tab — your pay per tap and per-second salary rise a lot." },
+  howto5: { id: "<b>Beli bisnis</b> biar uang ngalir sendiri tiap detik, walau kamu lagi santai.", en: "<b>Buy businesses</b> so money flows on its own every second, even while you relax." },
+  howto6: { id: "<b>Jaga kesehatan & kebahagiaan</b> — kalau dua-duanya anjlok, penghasilanmu kepotong setengah.", en: "<b>Look after your health & happiness</b> — if both crash, your income is cut in half." },
+  howto7: { id: "<b>Upgrade gaya hidup & investasi</b> buat ngebut dari gelandangan sampai jadi sultan.", en: "<b>Upgrade your lifestyle & invest</b> to speed from homeless to sultan." },
+  footLine1: { id: "Idle Life — game simulasi hidup versi web.", en: "Idle Life — a web life-simulation game." },
+  footLine2: { id: "Progres tersimpan otomatis di browser ini", en: "Progress is saved automatically in this browser" },
+  exportBtn: { id: "⬇️ Export Save", en: "⬇️ Export Save" },
+  importBtn: { id: "⬆️ Import Save", en: "⬆️ Import Save" },
+  resetFooterBtn: { id: "Reset / Mulai dari Awal", en: "Reset / Start Over" },
+  modalTitle: { id: "Mulai hidup baru?", en: "Start a new life?" },
+  modalBody: { id: "Semua uang, pekerjaan, bisnis, dan investasimu di sesi ini bakal hilang dan kamu balik jadi gelandangan $0. Yakin?", en: "All your money, jobs, businesses, and investments in this session will be gone and you'll be back to a $0 homeless start. Are you sure?" },
+  modalCancel: { id: "Batal", en: "Cancel" },
+  modalConfirm: { id: "Ya, ulang dari nol", en: "Yes, start over" },
+  perSec: { id: "/dtk", en: "/sec" },
+  perTap: { id: "Per ketuk", en: "Per tap" },
+  perTapSuffix: { id: "per ketuk", en: "per tap" },
+  salary: { id: "Gaji", en: "Salary" },
+  noDiplomaReq: { id: "Tanpa syarat ijazah", en: "No diploma required" },
+  requires: { id: "Syarat:", en: "Requires:" },
+  badgeGraduated: { id: "LULUS ✓", en: "GRADUATED ✓" },
+  badgeYourTurn: { id: "Giliranmu", en: "Your turn" },
+  badgeLocked: { id: "Terkunci", en: "Locked" },
+  badgeActive: { id: "AKTIF", en: "ACTIVE" },
+  badgeCanApply: { id: "Bisa dilamar", en: "Can apply" },
+  badgeNow: { id: "SEKARANG", en: "NOW" },
+  badgeUpgrade: { id: "Upgrade", en: "Upgrade" },
+  badgePassed: { id: "Terlewati", en: "Passed" },
+  badgeLater: { id: "Nanti", en: "Later" },
+  studyBtn: { id: "Sekolah", en: "Study" },
+  upgradeBtn: { id: "Upgrade", en: "Upgrade" },
+  jobCurrent: { id: "Sedang kamu jalani", en: "Currently working" },
+  jobTake: { id: "Ambil pekerjaan ini", en: "Take this job" },
+  moveBuyBtn: { id: "Pindah / beli", en: "Move / buy" },
+  buy1: { id: "Beli 1", en: "Buy 1" },
+  buy10: { id: "Beli 10", en: "Buy 10" },
+  buy500: { id: "Beli $500", en: "Buy $500" },
+  sellAll: { id: "Jual semua", en: "Sell all" },
+  price: { id: "Harga", en: "Price" },
+  inValue: { id: "nilai", en: "in value" },
+  perUnit: { id: "Per unit", en: "Per unit" },
+  total: { id: "Total", en: "Total" },
+  bonus: { id: "bonus", en: "bonus" },
+  off: { id: "Mati", en: "Off" },
+  min: { id: "mnt", en: "min" },
+  hoursMins: { id: function(o){ return o.h + " jam " + o.m + " mnt"; }, en: function(o){ return o.h + " hr " + o.m + " min"; } },
+  noSchool: { id: "Tidak sekolah", en: "No schooling" },
+  noInvest: { id: "Belum ada investasi", en: "No investments yet" },
+  coopEmpty: { id: "Kandang kosong — beli ayam pertamamu di bawah.", en: "Empty coop — buy your first chicken below." },
+  eggLaying: { id: function(n){ return n + " ayam bertelur otomatis, telur langsung terjual"; }, en: function(n){ return n + (n === 1 ? " chicken is" : " chickens are") + " laying eggs automatically, eggs sell instantly"; } },
+  noEggs: { id: "Belum ada telur", en: "No eggs yet" },
+  chickensUnit: { id: function(n){ return n + " ekor"; }, en: function(n){ return n + (n === 1 ? " chicken" : " chickens"); } },
+  buyChicken1: { id: "Beli 1 ayam", en: "Buy 1 chicken" },
+  buyChicken5: { id: "Beli 5 ayam", en: "Buy 5 chickens" },
+  tapsPerSec: { id: "ketuk/dtk", en: "taps/sec" },
+  autoTapMax: { id: function(m){ return "Auto-Ketuk sudah MAX (Lv. " + m + ")"; }, en: function(m){ return "Auto-Tap is MAX (Lv. " + m + ")"; } },
+  autoTapActivate: { id: "Aktifkan Auto-Ketuk", en: "Activate Auto-Tap" },
+  autoTapRaise: { id: function(lv){ return "Naikkan Auto-Ketuk ke Lv. " + lv; }, en: function(lv){ return "Raise Auto-Tap to Lv. " + lv; } },
+  notEnoughMoney: { id: function(o){ return "Uangmu kurang — butuh " + o.amount + ", kamu punya " + o.have + ". Ketuk lagi atau tunggu penghasilan pasifmu."; }, en: function(o){ return "Not enough money — you need " + o.amount + ", you have " + o.have + ". Tap more or wait for your passive income."; } },
+  eduBought: { id: function(n){ return "Selamat, kamu " + n + "! Pekerjaan yang lebih bagus sekarang terbuka."; }, en: function(n){ return "Congratulations! You are now: " + n + ". Better jobs are now open."; } },
+  eduLog: { id: function(i){ return "🎓 <b>" + LName(EDUCATION[i]) + "</b> — ijazah baru, peluang baru."; }, en: function(i){ return "🎓 <b>" + LName(EDUCATION[i]) + "</b> — a new diploma, new opportunities."; } },
+  jobNew: { id: function(o){ return "Pekerjaan baru: " + o.name + " — " + o.click + "/ketuk + gaji " + o.salary + "/dtk."; }, en: function(o){ return "New job: " + o.name + " — " + o.click + "/tap + salary " + o.salary + "/sec."; } },
+  jobLog: { id: function(i){ return "💼 Mulai kerja sebagai <b>" + LName(JOBS[i]) + "</b>."; }, en: function(i){ return "💼 Started working as a <b>" + LName(JOBS[i]) + "</b>."; } },
+  upgradeBought: { id: function(o){ return o.name + " naik ke level " + o.lvl + ". Bayaran per ketukmu naik."; }, en: function(o){ return o.name + " rose to level " + o.lvl + ". Your pay per tap went up."; } },
+  lifeBought: { id: function(o){ return o.cat + " kamu sekarang: " + o.item + ". Hidup makin layak, penghasilan ikut naik."; }, en: function(o){ return o.cat + " upgraded: " + o.item + ". Life gets more comfortable, and your income rises too."; } },
+  lifeLog: { id: function(o){ var g = LIFESTYLE.filter(function(x){ return x.cat === o.cat; })[0]; return "🏠 Upgrade " + LCat(g).toLowerCase() + ": <b>" + LName(g.items[o.i]) + "</b>."; }, en: function(o){ var g = LIFESTYLE.filter(function(x){ return x.cat === o.cat; })[0]; return "🏠 " + LCat(g) + " upgrade: <b>" + LName(g.items[o.i]) + "</b>."; } },
+  chickenBought: { id: function(o){ return "Kamu membeli " + o.n + " ayam. Sekarang ada " + o.total + " ekor — telur terjual otomatis nambah " + o.gain + "/dtk."; }, en: function(o){ return "You bought " + o.n + (o.n === 1 ? " chicken" : " chickens") + ". You now have " + o.total + " — eggs selling automatically add " + o.gain + "/sec."; } },
+  chickenFirstLog: { id: "🐔 <b>Ayam pertama</b> masuk kandang — telur mulai terjual otomatis.", en: "🐔 <b>First chicken</b> in the coop — eggs start selling automatically." },
+  chickenGrowLog: { id: function(n){ return "🐔 Kandang ayam membesar: sekarang <b>" + n + " ekor</b>."; }, en: function(n){ return "🐔 The coop is growing: now <b>" + n + " chickens</b>."; } },
+  autoTapMaxToast: { id: "Auto-Ketuk sudah di level maksimal.", en: "Auto-Tap is already at max level." },
+  autoTapUp: { id: function(o){ return "Auto-Ketuk naik ke Lv. " + o.lv + " — sekarang " + o.rate + " ketuk otomatis per detik. Tanganmu bisa istirahat."; }, en: function(o){ return "Auto-Tap rose to Lv. " + o.lv + " — now " + o.rate + " automatic taps per second. Your fingers can rest."; } },
+  autoTapFirstLog: { id: "🤖 <b>Auto-Ketuk aktif!</b> Tombol kerja sekarang diketuk otomatis.", en: "🤖 <b>Auto-Tap is on!</b> The work button is now tapped automatically." },
+  bizBought: { id: function(o){ return "Kamu membeli " + o.n + " unit " + o.name + ". Penghasilan pasif naik " + o.gain + "/dtk."; }, en: function(o){ return "You bought " + o.n + " unit" + (o.n > 1 ? "s" : "") + " of " + o.name + ". Passive income rose by " + o.gain + "/sec."; } },
+  bizFirstLog: { id: function(i){ return "🏪 Bisnis pertama di kategori ini: <b>" + LName(BUSINESSES[i]) + "</b>."; }, en: function(i){ return "🏪 First business in this category: <b>" + LName(BUSINESSES[i]) + "</b>."; } },
+  assetNeedCash: { id: function(o){ return "Beli " + o.name + " butuh $500 tunai. Uangmu sekarang " + o.have + "."; }, en: function(o){ return "Buying " + o.name + " needs $500 cash. You have " + o.have + " right now."; } },
+  assetBought: { id: function(o){ return "Kamu menaruh $500 di " + o.name + " di harga " + o.price + "/unit."; }, en: function(o){ return "You put $500 into " + o.name + " at " + o.price + "/unit."; } },
+  assetNone: { id: function(n){ return "Kamu belum punya " + n + " buat dijual."; }, en: function(n){ return "You don't own any " + n + " to sell."; } },
+  assetSold: { id: function(o){ return "Kamu menjual " + o.name + " senilai " + o.value + " (" + o.word + " " + o.pnl + ")."; }, en: function(o){ return "You sold " + o.name + " worth " + o.value + " (" + o.word + " " + o.pnl + ")."; } },
+  assetSoldLog: { id: function(o){ var a = ASSETS.filter(function(x){ return x.id === o.id; })[0]; return "📈 Jual <b>" + LName(a) + "</b>: " + (o.pnl >= 0 ? tr("profit") : tr("loss")) + " " + fmt(Math.abs(o.pnl)) + "."; }, en: function(o){ var a = ASSETS.filter(function(x){ return x.id === o.id; })[0]; return "📈 Sold <b>" + LName(a) + "</b>: " + (o.pnl >= 0 ? tr("profit") : tr("loss")) + " " + fmt(Math.abs(o.pnl)) + "."; } },
+  profit: { id: "untung", en: "profit" },
+  loss: { id: "rugi", en: "loss" },
+  eatOk: { id: "Perut kenyang, badan segar lagi. Kesehatan +22.", en: "Full stomach, body refreshed. Health +22." },
+  doctorOk: { id: "Habis dari dokter, badan enteng. Kesehatan +55.", en: "Back from the doctor, feeling light. Health +55." },
+  funOk: { id: "Santai sejenak itu perlu. Kebahagiaan +22.", en: "A little break is needed. Happiness +22." },
+  tripOk: { id: "Liburan singkat yang berkualitas. Kebahagiaan +60.", en: "A short, quality vacation. Happiness +60." },
+  costHealth: { id: function(o){ return "Biaya " + o.cost + " • +" + o.gain + " kesehatan"; }, en: function(o){ return "Costs " + o.cost + " • +" + o.gain + " health"; } },
+  costHappy: { id: function(o){ return "Biaya " + o.cost + " • +" + o.gain + " bahagia"; }, en: function(o){ return "Costs " + o.cost + " • +" + o.gain + " happiness"; } },
+  resetLog: { id: "🌱 <b>Hidup baru dimulai.</b> Dari nol lagi — kali ini kamu udah tahu caranya.", en: "🌱 <b>A new life begins.</b> From zero again — this time you already know how." },
+  resetToast: { id: "Hidup baru dimulai dari nol. Semangat, kali ini lebih cepat naiknya.", en: "A new life starts from zero. Go for it — this time you'll climb faster." },
+  exportOk: { id: "Export berhasil! File idle-life-save.json sudah diunduh — simpan file itu di Google Drive buat backup progresmu.", en: "Export successful! The idle-life-save.json file has been downloaded — save it in Google Drive to back up your progress." },
+  exportFail: { id: "Export gagal — browser tidak bisa membuat file unduhan. Progresmu tetap aman tersimpan di browser ini.", en: "Export failed — the browser couldn't create the download file. Your progress is still safely saved in this browser." },
+  importInvalidJson: { id: "Import gagal — file itu bukan file save Idle Life yang valid (isinya tidak bisa dibaca sebagai simpanan game). Progresmu saat ini tidak berubah dan tetap aman.", en: "Import failed — that file is not a valid Idle Life save (its contents couldn't be read as game data). Your current progress is unchanged and safe." },
+  importInvalid: { id: "Import gagal — file itu bukan file save Idle Life yang valid. Progresmu saat ini tidak berubah dan tetap aman.", en: "Import failed — that file is not a valid Idle Life save. Your current progress is unchanged and safe." },
+  importReadFail: { id: "Import gagal — file tidak bisa dibaca. Progresmu saat ini tidak berubah dan tetap aman.", en: "Import failed — the file couldn't be read. Your current progress is unchanged and safe." },
+  importLog: { id: "📥 <b>Save diimpor</b> dari file — progresmu sekarang lanjut dari simpanan itu.", en: "📥 <b>Save imported</b> from file — your progress now continues from that save." },
+  importOk: { id: "Import berhasil! Progres dari file save sudah dimuat dan tersimpan di browser ini.", en: "Import successful! The progress from the save file has been loaded and saved in this browser." },
+  tierUp: { id: function(n){ return "NAIK KELAS! Kamu sekarang: " + n + "."; }, en: function(n){ return "LEVEL UP! You are now: " + n + "."; } },
+  tierUpLog: { id: function(i){ return "🎉 Naik kelas jadi <b>" + LName(TIERS[i]) + "</b>."; }, en: function(i){ return "🎉 Leveled up to <b>" + LName(TIERS[i]) + "</b>."; } },
+  earnMore: { id: function(o){ return "Hasilkan " + o.amount + " lagi buat jadi " + o.name; }, en: function(o){ return "Earn " + o.amount + " more to become " + o.name; } },
+  topTier: { id: "Kamu udah di puncak tangga hidup. Sekarang tinggal nikmati & kumpulin sebanyak-banyaknya.", en: "You've reached the top of the ladder of life. Now just enjoy it and pile up as much as you can." },
+  pnlProfit: { id: function(o){ return "Untung " + o.pnl + " dari modal " + o.spent; }, en: function(o){ return "Profit " + o.pnl + " on " + o.spent + " invested"; } },
+  pnlLoss: { id: function(o){ return "Rugi " + o.pnl + " dari modal " + o.spent; }, en: function(o){ return "Loss " + o.pnl + " on " + o.spent + " invested"; } },
+  welcomeBackLog: { id: "👋 <b>Selamat datang kembali!</b> Progresmu dimuat dari simpanan di browser ini.", en: "👋 <b>Welcome back!</b> Your progress was loaded from this browser's save." },
+  offlineLog: { id: function(n){ return "💰 Selama kamu pergi, ayam, bisnis & auto-ketukmu menghasilkan <b>" + fmt(n) + "</b>."; }, en: function(n){ return "💰 While you were away, your chickens, businesses & auto-tap earned <b>" + fmt(n) + "</b>."; } },
+  firstStartLog: { id: "🧎 <b>Kamu terbangun di emperan toko</b> dengan $0 di kantong — tapi kamu punya 3 ekor ayam. Telurnya sudah mulai terjual sendiri.", en: "🧎 <b>You wake up in a shop doorway</b> with $0 in your pocket — but you have 3 chickens. Their eggs are already selling themselves." },
+  welcomeBackOffline: { id: function(a){ return "Selamat datang kembali! Selama kamu pergi, ayam, bisnis & auto-ketukmu menghasilkan " + a + "."; }, en: function(a){ return "Welcome back! While you were away, your chickens, businesses & auto-tap earned " + a + "."; } },
+  welcomeBack: { id: "Selamat datang kembali! Progresmu lanjut dari posisi terakhir.", en: "Welcome back! Your progress continues from where you left off." },
+  welcomeNew: { id: "Selamat datang di Idle Life! 3 ayammu sudah bertelur & telurnya terjual otomatis — ketuk tombol emasnya buat cari uang tambahan.", en: "Welcome to Idle Life! Your 3 chickens are already laying eggs & the eggs sell automatically — tap the golden button to earn extra money." },
+  achievementLog: { id: function(i){ return "🏆 <b>Pencapaian:</b> " + LText(ACHIEVEMENTS[i]); }, en: function(i){ return "🏆 <b>Achievement:</b> " + LText(ACHIEVEMENTS[i]); } }
+};
+
+function tr(key, arg){
+  var d = I18N[key];
+  if (!d) return key;
+  var v = d[lang] || d.id;
+  return (typeof v === "function") ? v(arg) : v;
+}
+function LName(item){ return (lang === "en" && item.name_en) ? item.name_en : item.name; }
+function LDesc(item){ return (lang === "en" && item.desc_en) ? item.desc_en : item.desc; }
+function LCat(group){ return (lang === "en" && group.cat_en) ? group.cat_en : group.cat; }
+function LText(item){ return (lang === "en" && item.text_en) ? item.text_en : item.text; }
+
+/* Label tombol emas mengikuti pekerjaan aktif (atau label default bila masih pengamen jalanan) */
+function setTapLabel(){
+  var el = $("tapLabel");
+  if (!el) return;
+  if (S.jobIndex === 0) el.innerHTML = tr("tapDefault");
+  else el.innerHTML = LName(JOBS[S.jobIndex]).toUpperCase().replace(/ /g, "<br>");
+}
+
+function applyLang(){
+  document.documentElement.lang = (lang === "en") ? "en" : "id";
+  document.title = tr("docTitle");
+  document.querySelectorAll("[data-i18n]").forEach(function(el){ el.textContent = tr(el.getAttribute("data-i18n")); });
+  document.querySelectorAll("[data-i18n-html]").forEach(function(el){ el.innerHTML = tr(el.getAttribute("data-i18n-html")); });
+  var idBtn = $("langIdBtn"), enBtn = $("langEnBtn");
+  if (idBtn) idBtn.classList.toggle("active", lang === "id");
+  if (enBtn) enBtn.classList.toggle("active", lang === "en");
+  setTapLabel();
+  refreshLists();
+  updateHUD();
+  renderLog();
+}
+
+function setLang(newLang){
+  if (newLang !== "id" && newLang !== "en") return;
+  lang = newLang;
+  try { localStorage.setItem(LANG_KEY, lang); } catch (e) {}
+  applyLang();
+  doSave();
+}
+$("langIdBtn").addEventListener("click", function(){ setLang("id"); });
+$("langEnBtn").addEventListener("click", function(){ setLang("en"); });
+
+
+/* ================= STATE ================= */
+var S;
+function freshState(){
+  return {
+    money: 0, totalEarned: 0, clicks: 0, startTime: Date.now(),
+    health: 70, happy: 70,
+    eduIndex: -1, jobIndex: 0,
+    chickens: CHICKEN.startCount, autoTap: 0,
+    upgrades: {}, biz: {}, life: {},
+    assets: {}, achieved: {}, lastTier: 0
+  };
+}
+S = freshState();
+UPGRADES.forEach(function(u){ S.upgrades[u.id] = 0; });
+BUSINESSES.forEach(function(b,i){ S.biz[i] = 0; });
+LIFESTYLE.forEach(function(g){ S.life[g.cat] = 0; });
+ASSETS.forEach(function(a){ S.assets[a.id] = { price: a.startPrice, held: 0, spent: 0, history: [a.startPrice] }; });
+
+/* ================= PENYIMPANAN (localStorage) ================= */
+var SAVE_KEY = "idleLifeSaveV1";
+var _lastSaveAt = 0;
+var _offlineGain = 0;
+var _offlineSeconds = 0;
+function doSave(){
+  try {
+    var payload = { v: 1, savedAt: Date.now(), state: S, lang: lang };
+    localStorage.setItem(SAVE_KEY, JSON.stringify(payload));
+    _lastSaveAt = Date.now();
+  } catch (e) { /* penyimpanan tidak tersedia — game tetap jalan */ }
+}
+function saveGame(force){
+  var now = Date.now();
+  if (!force && now - _lastSaveAt < 1500) return;
+  doSave();
+}
+function loadSavedState(){
+  try {
+    var raw = localStorage.getItem(SAVE_KEY);
+    if (!raw) return;
+    var data = JSON.parse(raw);
+    if (!data || !data.state) return;
+    var sv = data.state;
+    function num(v, fallback){ return (typeof v === "number" && isFinite(v)) ? v : fallback; }
+    S.money = Math.max(0, num(sv.money, S.money));
+    S.totalEarned = Math.max(0, num(sv.totalEarned, S.totalEarned));
+    S.clicks = Math.max(0, Math.floor(num(sv.clicks, S.clicks)));
+    S.health = Math.max(0, Math.min(100, num(sv.health, S.health)));
+    S.happy = Math.max(0, Math.min(100, num(sv.happy, S.happy)));
+    S.eduIndex = Math.max(-1, Math.min(EDUCATION.length - 1, Math.floor(num(sv.eduIndex, S.eduIndex))));
+    S.jobIndex = Math.max(0, Math.min(JOBS.length - 1, Math.floor(num(sv.jobIndex, S.jobIndex))));
+    /* Simpanan lama belum punya ayam/auto-ketuk: pertahankan nilai awal (3 ayam, auto-ketuk 0) */
+    S.chickens = Math.max(0, Math.min(9999, Math.floor(num(sv.chickens, S.chickens))));
+    S.autoTap = Math.max(0, Math.min(AUTOTAP.maxLevel, Math.floor(num(sv.autoTap, S.autoTap))));
+    S.lastTier = Math.max(0, Math.min(TIERS.length - 1, Math.floor(num(sv.lastTier, S.lastTier))));
+    if (sv.upgrades) UPGRADES.forEach(function(u){ if (typeof sv.upgrades[u.id] === "number" && isFinite(sv.upgrades[u.id])) S.upgrades[u.id] = Math.max(0, Math.floor(sv.upgrades[u.id])); });
+    if (sv.biz) BUSINESSES.forEach(function(b, i){ if (typeof sv.biz[i] === "number" && isFinite(sv.biz[i])) S.biz[i] = Math.max(0, Math.floor(sv.biz[i])); });
+    if (sv.life) LIFESTYLE.forEach(function(g){ if (typeof sv.life[g.cat] === "number" && isFinite(sv.life[g.cat])) S.life[g.cat] = Math.max(0, Math.min(g.items.length - 1, Math.floor(sv.life[g.cat]))); });
+    if (sv.assets) ASSETS.forEach(function(a){
+      var sa = sv.assets[a.id];
+      if (!sa) return;
+      var st = S.assets[a.id];
+      if (typeof sa.price === "number" && isFinite(sa.price) && sa.price > 0) st.price = sa.price;
+      if (typeof sa.held === "number" && isFinite(sa.held)) st.held = Math.max(0, sa.held);
+      if (typeof sa.spent === "number" && isFinite(sa.spent)) st.spent = Math.max(0, sa.spent);
+      if (sa.history && sa.history.length) {
+        var h = sa.history.filter(function(p){ return typeof p === "number" && isFinite(p) && p > 0; });
+        if (h.length) st.history = h.slice(-40);
+      }
+    });
+    if (sv.achieved) ACHIEVEMENTS.forEach(function(ac, i){ if (sv.achieved[i]) S.achieved[i] = true; });
+    if (data.lang === "en" || data.lang === "id") lang = data.lang;
+    if (typeof data.savedAt === "number" && isFinite(data.savedAt)) {
+      _offlineSeconds = Math.max(0, Math.floor((Date.now() - data.savedAt) / 1000));
+    }
+    S.startTime = Date.now();
+  } catch (e) { /* simpanan rusak — mulai dari state saat ini */ }
+}
+loadSavedState();
+
+/* ================= HELPERS ================= */
+function $(id){ return document.getElementById(id); }
+function fmt(n){
+  if (n < 0) return "-" + fmt(-n);
+  var loc = lang === "en" ? "en-US" : "id-ID";
+  if (n < 1000) return "$" + Math.floor(n).toLocaleString(loc);
+  var units = lang === "en" ? [[1e12,"T"],[1e9,"B"],[1e6,"M"],[1e3,"K"]] : [[1e12,"T"],[1e9,"M"],[1e6,"jt"],[1e3,"rb"]];
+  for (var i=0;i<units.length;i++){
+    if (n >= units[i][0]){
+      var v = n / units[i][0];
+      var s = v >= 100 ? String(Math.floor(v)) : v.toFixed(1).replace(/\.0$/, "");
+      if (lang === "id") s = s.replace(".", ",");
+      return "$" + s + " " + units[i][1];
+    }
+  }
+  return "$" + Math.floor(n);
+}
+function fmtFull(n){ return "$" + Math.floor(n).toLocaleString(lang === "en" ? "en-US" : "id-ID"); }
+/* Angka desimal mengikuti bahasa aktif: koma di ID, titik di EN */
+function dec(n, d){ var s = Number(n).toFixed(d === undefined ? 2 : d); return lang === "id" ? s.replace(".", ",") : s; }
+function lifeBonus(){
+  var b = 0;
+  LIFESTYLE.forEach(function(g){ b += g.items[S.life[g.cat]].bonus; });
+  return b;
+}
+function lifeRegen(kind){
+  var r = 0;
+  LIFESTYLE.forEach(function(g){ r += g.items[S.life[g.cat]][kind]; });
+  return r;
+}
+function needPenalty(){ return (S.health < 20 || S.happy < 20) ? 0.5 : 1; }
+function clickValue(){
+  var v = JOBS[S.jobIndex].click;
+  UPGRADES.forEach(function(u){ v += S.upgrades[u.id] * u.clickBonus; });
+  return v * (1 + lifeBonus()) * needPenalty();
+}
+function bizIncome(){
+  var t = 0;
+  BUSINESSES.forEach(function(b,i){ t += S.biz[i] * b.income; });
+  return t;
+}
+function chickenIncomeRaw(){
+  return S.chickens * CHICKEN.income;
+}
+function chickenCost(owned){ return Math.ceil(CHICKEN.baseCost * Math.pow(CHICKEN.costMult, owned)); }
+function autoTapRate(){ return S.autoTap * AUTOTAP.tapsPerLevel; }
+function autoTapCost(){
+  if (S.autoTap >= AUTOTAP.maxLevel) return null;
+  return Math.ceil(AUTOTAP.baseCost * Math.pow(AUTOTAP.costMult, S.autoTap));
+}
+function autoTapIncome(){
+  return clickValue() * autoTapRate();
+}
+function perSec(){
+  return (JOBS[S.jobIndex].salary + bizIncome() + chickenIncomeRaw()) * (1 + lifeBonus()) * needPenalty();
+}
+function totalPerSec(){
+  return perSec() + autoTapIncome();
+}
+function bizCost(b, owned){ return Math.ceil(b.baseCost * Math.pow(1.15, owned)); }
+function upgCost(u){ return Math.ceil(u.baseCost * Math.pow(u.mult, S.upgrades[u.id])); }
+function tierIndex(){
+  var idx = 0;
+  TIERS.forEach(function(t,i){ if (S.totalEarned >= t.min) idx = i; });
+  return idx;
+}
+function toast(icon, text){
+  var box = $("toasts");
+  var el = document.createElement("div");
+  el.className = "toast";
+  el.innerHTML = '<span class="t-ico"></span><span class="t-txt"></span>';
+  el.querySelector(".t-ico").textContent = icon;
+  el.querySelector(".t-txt").textContent = text;
+  box.appendChild(el);
+  setTimeout(function(){ el.style.opacity = "0"; el.style.transition = "opacity .3s"; }, 3400);
+  setTimeout(function(){ el.remove(); }, 3800);
+  while (box.children.length > 3) box.firstChild.remove();
+}
+/* Riwayat log disimpan TERSTRUKTUR (kunci + argumen mentah) supaya teksnya
+   bisa di-render ulang saat bahasa diganti — entri lama ikut berganti bahasa. */
+var LOG = [];
+function logKey(key, arg){
+  LOG.unshift({ k: key, a: arg });
+  if (LOG.length > 14) LOG.length = 14;
+  renderLog();
+}
+function renderLog(){
+  var list = $("logList");
+  if (!list) return;
+  list.innerHTML = LOG.map(function(e){ return "<li>" + tr(e.k, e.a) + "</li>"; }).join("");
+}
+
+/* ================= RENDER: STATIC LISTS ================= */
+function renderEducation(){
+  var wrap = $("eduCards"); wrap.innerHTML = "";
+  EDUCATION.forEach(function(e, i){
+    var owned = S.eduIndex >= i;
+    var isNext = S.eduIndex + 1 === i;
+    var card = document.createElement("div");
+    card.className = "card" + (owned ? " owned" : "") + (!isNext && !owned ? " locked" : "");
+    card.innerHTML =
+      '<div class="card-top"><div class="card-ico">' + e.icon + '</div>' +
+      '<div><h3>' + LName(e) + '</h3><p class="desc">' + LDesc(e) + '</p></div>' +
+      (owned ? '<span class="badge green">' + tr("badgeGraduated") + '</span>' : (isNext ? '<span class="badge">' + tr("badgeYourTurn") + '</span>' : '<span class="badge gray">' + tr("badgeLocked") + '</span>')) +
+      '</div>' +
+      (owned ? '' : '<button class="buy-btn" type="button" ' + (!isNext ? "disabled" : "") + '>' + tr("studyBtn") + ' — ' + fmt(e.cost) + '</button>');
+    var btn = card.querySelector(".buy-btn");
+    if (btn) btn.addEventListener("click", function(){ buyEdu(i); });
+    wrap.appendChild(card);
+  });
+}
+function renderJobs(){
+  var wrap = $("jobCards"); wrap.innerHTML = "";
+  JOBS.forEach(function(j, i){
+    var unlocked = S.eduIndex >= j.edu;
+    var active = S.jobIndex === i;
+    var card = document.createElement("div");
+    card.className = "card" + (active ? " owned" : "") + (!unlocked ? " locked" : "");
+    var req = j.edu < 0 ? tr("noDiplomaReq") : tr("requires") + " " + LName(EDUCATION[j.edu]);
+    card.innerHTML =
+      '<div class="card-top"><div class="card-ico">' + j.icon + '</div>' +
+      '<div><h3>' + LName(j) + '</h3><p class="desc">' + LDesc(j) + '</p></div>' +
+      (active ? '<span class="badge green">' + tr("badgeActive") + '</span>' : (unlocked ? '<span class="badge">' + tr("badgeCanApply") + '</span>' : '<span class="badge gray">' + tr("badgeLocked") + '</span>')) +
+      '</div>' +
+      '<div class="card-meta"><span class="meta-chip">' + tr("perTap") + ' ' + fmt(j.click) + '</span><span class="meta-chip">' + tr("salary") + ' ' + fmt(j.salary) + tr("perSec") + '</span></div>' +
+      (unlocked
+        ? (active ? '<button class="buy-btn secondary" type="button" disabled>' + tr("jobCurrent") + '</button>'
+                   : '<button class="buy-btn" type="button">' + tr("jobTake") + '</button>')
+        : '<div class="req-text">🔒 ' + req + '</div>');
+    var btn = card.querySelector(".buy-btn:not(:disabled)");
+    if (btn) btn.addEventListener("click", function(){ takeJob(i); });
+    wrap.appendChild(card);
+  });
+}
+function renderUpgrades(){
+  var wrap = $("upgradeCards"); wrap.innerHTML = "";
+  UPGRADES.forEach(function(u){
+    var lvl = S.upgrades[u.id];
+    var card = document.createElement("div");
+    card.className = "card";
+    card.innerHTML =
+      '<div class="card-top"><div class="card-ico">' + u.icon + '</div>' +
+      '<div><h3>' + LName(u) + '</h3><p class="desc">' + LDesc(u) + '</p></div>' +
+      '<span class="badge">Lv. ' + lvl + '</span></div>' +
+      '<button class="buy-btn" type="button">' + tr("upgradeBtn") + ' — ' + fmt(upgCost(u)) + '</button>';
+    card.querySelector(".buy-btn").addEventListener("click", function(){ buyUpgrade(u); });
+    wrap.appendChild(card);
+  });
+}
+function renderLife(){
+  var wrap = $("lifeSections"); wrap.innerHTML = "";
+  LIFESTYLE.forEach(function(g){
+    var label = document.createElement("div");
+    label.className = "section-label";
+    label.textContent = LCat(g);
+    wrap.appendChild(label);
+    var cards = document.createElement("div");
+    cards.className = "cards";
+    g.items.forEach(function(it, i){
+      var cur = S.life[g.cat];
+      var owned = i <= cur && !(i === 0 && cur === 0 && false);
+      var isCurrent = i === cur;
+      var isNext = i === cur + 1;
+      var card = document.createElement("div");
+      card.className = "card" + (isCurrent ? " owned" : "") + (!isCurrent && !isNext && i > cur ? " locked" : "");
+      var fx = [];
+      if (it.health) fx.push("❤️ +" + it.health.toFixed(2) + tr("perSec"));
+      if (it.happy) fx.push("😊 +" + it.happy.toFixed(2) + tr("perSec"));
+      if (it.bonus) fx.push("💰 " + tr("bonus") + " +" + Math.round(it.bonus * 100) + "%");
+      card.innerHTML =
+        '<div class="card-top"><div class="card-ico">' + it.icon + '</div>' +
+        '<div><h3>' + LName(it) + '</h3><p class="desc">' + LDesc(it) + '</p></div>' +
+        (isCurrent ? '<span class="badge green">' + tr("badgeNow") + '</span>' : (isNext ? '<span class="badge">' + tr("badgeUpgrade") + '</span>' : (i < cur ? '<span class="badge gray">' + tr("badgePassed") + '</span>' : '<span class="badge gray">' + tr("badgeLater") + '</span>'))) +
+        '</div>' +
+        (fx.length ? '<div class="card-meta">' + fx.map(function(f){ return '<span class="meta-chip">' + f + '</span>'; }).join("") + '</div>' : '') +
+        (isNext ? '<button class="buy-btn" type="button">' + tr("moveBuyBtn") + ' — ' + fmt(it.cost) + '</button>' : '');
+      var btn = card.querySelector(".buy-btn");
+      if (btn) btn.addEventListener("click", function(){ buyLife(g.cat, i); });
+      cards.appendChild(card);
+    });
+    wrap.appendChild(cards);
+  });
+}
+function renderFarm(){
+  var badge = $("chickenBadge");
+  if (badge) badge.textContent = tr("chickensUnit", S.chickens);
+  var vis = $("chickenVisual");
+  if (vis) {
+    var shown = Math.min(S.chickens, 14);
+    var txt = "";
+    for (var i = 0; i < shown; i++) txt += "🐔";
+    if (S.chickens > shown) txt += " … +" + (S.chickens - shown);
+    if (S.chickens === 0) txt = tr("coopEmpty");
+    vis.textContent = txt;
+  }
+  var egg = $("eggRate");
+  if (egg) egg.textContent = S.chickens > 0 ? tr("eggLaying", S.chickens) : tr("noEggs");
+  var ci = $("chickenIncomeVal");
+  if (ci) ci.textContent = fmt(chickenIncomeRaw() * (1 + lifeBonus()) * needPenalty()) + tr("perSec");
+  var b1 = $("buyChicken1");
+  if (b1) b1.textContent = tr("buyChicken1") + " — " + fmt(chickenCost(S.chickens));
+  var b5 = $("buyChicken5");
+  if (b5) {
+    var tot5 = 0;
+    for (var k = 0; k < 5; k++) tot5 += chickenCost(S.chickens + k);
+    b5.textContent = tr("buyChicken5") + " — " + fmt(tot5);
+  }
+  var ab = $("autoTapBadge");
+  if (ab) ab.textContent = "Lv. " + S.autoTap;
+  var ar = $("autoTapRateVal");
+  if (ar) ar.textContent = autoTapRate() + " " + tr("tapsPerSec");
+  var ai = $("autoTapIncomeVal");
+  if (ai) ai.textContent = fmt(autoTapIncome()) + tr("perSec");
+  var bb = $("buyAutoTapBtn");
+  if (bb) {
+    var c = autoTapCost();
+    if (c === null) { bb.textContent = tr("autoTapMax", AUTOTAP.maxLevel); bb.disabled = true; }
+    else { bb.disabled = false; bb.textContent = (S.autoTap === 0 ? tr("autoTapActivate") : tr("autoTapRaise", S.autoTap + 1)) + " — " + fmt(c); }
+  }
+}
+function renderBiz(){
+  var wrap = $("bizCards"); wrap.innerHTML = "";
+  BUSINESSES.forEach(function(b, i){
+    var owned = S.biz[i];
+    var card = document.createElement("div");
+    card.className = "card" + (owned > 0 ? " owned" : "");
+    card.innerHTML =
+      '<div class="card-top"><div class="card-ico">' + b.icon + '</div>' +
+      '<div><h3>' + LName(b) + '</h3><p class="desc">' + LDesc(b) + '</p></div>' +
+      '<span class="badge' + (owned > 0 ? " green" : "") + '">' + owned + ' unit</span></div>' +
+      '<div class="card-meta"><span class="meta-chip">' + tr("perUnit") + ' ' + fmt(b.income) + tr("perSec") + '</span>' +
+      (owned > 0 ? '<span class="meta-chip">' + tr("total") + ' ' + fmt(b.income * owned) + tr("perSec") + '</span>' : '') + '</div>' +
+      '<div class="buy-row"><button class="buy-btn" type="button" data-n="1">' + tr("buy1") + ' — ' + fmt(bizCost(b, owned)) + '</button>' +
+      '<button class="buy-btn secondary" type="button" data-n="10">' + tr("buy10") + '</button></div>';
+    card.querySelectorAll(".buy-btn").forEach(function(btn){
+      btn.addEventListener("click", function(){ buyBiz(i, parseInt(btn.getAttribute("data-n"), 10)); });
+    });
+    wrap.appendChild(card);
+  });
+}
+function renderAssets(){
+  var wrap = $("assetCards"); wrap.innerHTML = "";
+  ASSETS.forEach(function(a){
+    var st = S.assets[a.id];
+    var prev = st.history.length > 1 ? st.history[st.history.length - 2] : st.price;
+    var diff = prev ? ((st.price - prev) / prev) * 100 : 0;
+    var card = document.createElement("div");
+    card.className = "card" + (st.held > 0 ? " owned" : "");
+    card.innerHTML =
+      '<div class="card-top"><div class="card-ico">' + a.icon + '</div>' +
+      '<div><h3>' + LName(a) + '</h3><p class="desc">' + LDesc(a) + '</p></div>' +
+      '<span class="badge">' + fmt(st.held) + ' ' + tr("inValue") + '</span></div>' +
+      '<div class="card-meta"><span class="meta-chip">' + tr("price") + ' ' + fmtFull(st.price) + '/unit</span>' +
+      '<span class="meta-chip ' + (diff >= 0 ? "price-up" : "price-down") + '">' + (diff >= 0 ? "▲" : "▼") + " " + dec(Math.abs(diff), 1) + "%</span></div>" +
+      '<div class="spark">' + st.history.slice(-18).map(function(p){
+          var h = Math.max(12, Math.min(100, (p / (a.startPrice * 1.6)) * 100));
+          return '<i style="height:' + Math.round(h * 0.26) + 'px"></i>';
+        }).join("") + '</div>' +
+      '<div class="buy-row"><button class="buy-btn" type="button" data-act="buy">' + tr("buy500") + '</button>' +
+      '<button class="buy-btn secondary" type="button" data-act="sell">' + tr("sellAll") + '</button></div>';
+    card.querySelector('[data-act="buy"]').addEventListener("click", function(){ buyAsset(a.id); });
+    card.querySelector('[data-act="sell"]').addEventListener("click", function(){ sellAsset(a.id); });
+    wrap.appendChild(card);
+  });
+}
+
+/* ================= ACTIONS ================= */
+function spend(amount){
+  if (S.money < amount) { toast("💸", tr("notEnoughMoney", { amount: fmt(amount), have: fmt(S.money) })); return false; }
+  S.money -= amount; return true;
+}
+function buyEdu(i){
+  var e = EDUCATION[i];
+  if (!spend(e.cost)) return;
+  S.eduIndex = i;
+  toast("🎓", tr("eduBought", LName(e)));
+  logKey("eduLog", i);
+  refreshLists();
+}
+function takeJob(i){
+  S.jobIndex = i;
+  var j = JOBS[i];
+  $("tapLabel").innerHTML = LName(j).toUpperCase().replace(/ /g, "<br>");
+  toast("💼", tr("jobNew", { name: LName(j), click: fmt(j.click), salary: fmt(j.salary) }));
+  logKey("jobLog", i);
+  refreshLists();
+}
+function buyUpgrade(u){
+  var c = upgCost(u);
+  if (!spend(c)) return;
+  S.upgrades[u.id]++;
+  toast("💪", tr("upgradeBought", { name: LName(u), lvl: S.upgrades[u.id] }));
+  refreshLists();
+}
+function buyLife(cat, i){
+  var g = LIFESTYLE.filter(function(x){ return x.cat === cat; })[0];
+  var it = g.items[i];
+  if (!spend(it.cost)) return;
+  S.life[cat] = i;
+  toast("✨", tr("lifeBought", { cat: LCat(g), item: LName(it) }));
+  logKey("lifeLog", { cat: cat, i: i });
+  refreshLists();
+}
+function buyChicken(n){
+  var total = 0;
+  for (var k = 0; k < n; k++) total += chickenCost(S.chickens + k);
+  if (!spend(total)) return;
+  var wasEmpty = S.chickens === 0;
+  S.chickens += n;
+  toast("🐔", tr("chickenBought", { n: n, total: S.chickens, gain: fmt(CHICKEN.income * n) }));
+  if (wasEmpty) logKey("chickenFirstLog");
+  else if (n >= 5) logKey("chickenGrowLog", S.chickens);
+  refreshLists();
+}
+function buyAutoTap(){
+  var c = autoTapCost();
+  if (c === null) { toast("🤖", tr("autoTapMaxToast")); return; }
+  if (!spend(c)) return;
+  S.autoTap++;
+  toast("🤖", tr("autoTapUp", { lv: S.autoTap, rate: autoTapRate() }));
+  if (S.autoTap === 1) logKey("autoTapFirstLog");
+  refreshLists();
+}
+function buyBiz(i, n){
+  var b = BUSINESSES[i];
+  var total = 0, owned = S.biz[i];
+  for (var k = 0; k < n; k++) total += bizCost(b, owned + k);
+  if (!spend(total)) return;
+  S.biz[i] += n;
+  toast("🏪", tr("bizBought", { n: n, name: LName(b), gain: fmt(b.income * n) }));
+  if (S.biz[i] === n) logKey("bizFirstLog", i);
+  refreshLists();
+}
+function buyAsset(id){
+  var a = ASSETS.filter(function(x){ return x.id === id; })[0];
+  var st = S.assets[id];
+  var amount = 500;
+  if (S.money < amount) { toast("💸", tr("assetNeedCash", { name: LName(a), have: fmt(S.money) })); return; }
+  S.money -= amount;
+  st.held += amount; st.spent += amount;
+  toast("📈", tr("assetBought", { name: LName(a), price: fmtFull(st.price) }));
+  refreshLists();
+}
+function sellAsset(id){
+  var a = ASSETS.filter(function(x){ return x.id === id; })[0];
+  var st = S.assets[id];
+  if (st.held <= 0) { toast("🤷", tr("assetNone", LName(a))); return; }
+  var basePrice = ASSETS.filter(function(x){ return x.id === id; })[0].startPrice;
+  var value = st.held * (st.price / basePrice);
+  var pnl = value - st.spent;
+  S.money += value; S.totalEarned += Math.max(0, pnl);
+  toast(pnl >= 0 ? "💰" : "📉", tr("assetSold", { name: LName(a), value: fmt(value), word: pnl >= 0 ? tr("profit") : tr("loss"), pnl: fmt(Math.abs(pnl)) }));
+  logKey("assetSoldLog", { id: id, pnl: pnl });
+  st.held = 0; st.spent = 0;
+  refreshLists();
+}
+function refreshLists(){
+  renderEducation(); renderJobs(); renderUpgrades(); renderLife(); renderBiz(); renderAssets(); renderFarm();
+  saveGame(false);
+}
+
+/* ================= TAP ================= */
+$("tapBtn").addEventListener("click", function(ev){
+  var gain = clickValue();
+  S.money += gain; S.totalEarned += gain; S.clicks++;
+  S.health = Math.max(0, S.health - 0.06);
+  S.happy = Math.max(0, S.happy - 0.03);
+  var layer = $("floatLayer");
+  var num = document.createElement("span");
+  num.className = "float-num";
+  num.textContent = "+" + fmt(gain);
+  var card = $("avatarCard").getBoundingClientRect();
+  var x = ev.clientX ? (ev.clientX - card.left) : card.width / 2;
+  num.style.left = Math.max(8, Math.min(card.width - 90, x - 30)) + "px";
+  num.style.top = "56px";
+  layer.appendChild(num);
+  setTimeout(function(){ num.remove(); }, 980);
+  updateHUD();
+  saveGame(false);
+});
+
+/* Consumables */
+function consumable(cost, hGain, hpGain, okText){
+  if (!spend(cost)) return;
+  if (hGain) S.health = Math.min(100, S.health + hGain);
+  if (hpGain) S.happy = Math.min(100, S.happy + hpGain);
+  toast("✨", okText);
+  updateHUD();
+  saveGame(true);
+}
+/* Kandang ayam & auto-ketuk */
+$("buyChicken1").addEventListener("click", function(){ buyChicken(1); });
+$("buyChicken5").addEventListener("click", function(){ buyChicken(5); });
+$("buyAutoTapBtn").addEventListener("click", function(){ buyAutoTap(); });
+
+$("eatBtn").addEventListener("click", function(){ consumable(8 + tierIndex() * 30, 22, 0, tr("eatOk")); });
+$("doctorBtn").addEventListener("click", function(){ consumable(120 + tierIndex() * 220, 55, 0, tr("doctorOk")); });
+$("funBtn").addEventListener("click", function(){ consumable(10 + tierIndex() * 35, 0, 22, tr("funOk")); });
+$("tripBtn").addEventListener("click", function(){ consumable(250 + tierIndex() * 480, 6, 60, tr("tripOk")); });
+
+/* ================= TABS ================= */
+document.querySelectorAll(".tab-btn").forEach(function(btn){
+  btn.addEventListener("click", function(){
+    document.querySelectorAll(".tab-btn").forEach(function(b){ b.classList.remove("active"); });
+    document.querySelectorAll(".panel").forEach(function(p){ p.classList.remove("active"); });
+    btn.classList.add("active");
+    $("panel-" + btn.getAttribute("data-tab")).classList.add("active");
+    btn.scrollIntoView({ block: "nearest", behavior: "smooth" });
+  });
+});
+
+/* ================= RESET ================= */
+$("resetBtn").addEventListener("click", function(){ $("resetModal").classList.add("open"); });
+var _footerResetBtn = $("resetBtnFooter");
+if (_footerResetBtn) _footerResetBtn.addEventListener("click", function(){ $("resetModal").classList.add("open"); });
+$("cancelReset").addEventListener("click", function(){ $("resetModal").classList.remove("open"); });
+$("confirmReset").addEventListener("click", function(){
+  try { localStorage.removeItem(SAVE_KEY); } catch (e) {}
+  _offlineGain = 0; _offlineSeconds = 0;
+  S = freshState();
+  UPGRADES.forEach(function(u){ S.upgrades[u.id] = 0; });
+  BUSINESSES.forEach(function(b,i){ S.biz[i] = 0; });
+  LIFESTYLE.forEach(function(g){ S.life[g.cat] = 0; });
+  ASSETS.forEach(function(a){ S.assets[a.id] = { price: a.startPrice, held: 0, spent: 0, history: [a.startPrice] }; });
+  setTapLabel();
+  LOG.length = 0;
+  logKey("resetLog");
+  $("resetModal").classList.remove("open");
+  refreshLists(); updateHUD();
+  doSave();
+  toast("🌱", tr("resetToast"));
+});
+
+/* ================= EXPORT / IMPORT SAVE ================= */
+$("exportSaveBtn").addEventListener("click", function(){
+  try {
+    doSave();
+    var payload = { v: 1, savedAt: Date.now(), state: S, lang: lang };
+    var blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
+    var url = URL.createObjectURL(blob);
+    var a = document.createElement("a");
+    a.href = url;
+    a.download = "idle-life-save.json";
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
+    toast("💾", tr("exportOk"));
+  } catch (e) {
+    toast("⚠️", tr("exportFail"));
+  }
+});
+
+function isValidSaveData(data){
+  if (!data || typeof data !== "object" || Array.isArray(data)) return false;
+  if (data.v !== 1) return false;
+  var sv = data.state;
+  if (!sv || typeof sv !== "object" || Array.isArray(sv)) return false;
+  function isNum(v){ return typeof v === "number" && isFinite(v); }
+  if (!isNum(sv.money) || sv.money < 0) return false;
+  if (!isNum(sv.totalEarned) || sv.totalEarned < 0) return false;
+  if (!isNum(sv.clicks) || sv.clicks < 0) return false;
+  if (!isNum(sv.health) || !isNum(sv.happy)) return false;
+  if (!isNum(sv.eduIndex) || sv.eduIndex < -1 || sv.eduIndex > EDUCATION.length - 1) return false;
+  if (!isNum(sv.jobIndex) || sv.jobIndex < 0 || sv.jobIndex > JOBS.length - 1) return false;
+  /* Ayam & auto-ketuk: opsional supaya save lama tetap valid; bila ada, harus angka wajar */
+  if (Object.prototype.hasOwnProperty.call(sv, "chickens") && (!isNum(sv.chickens) || sv.chickens < 0 || sv.chickens > 9999)) return false;
+  if (Object.prototype.hasOwnProperty.call(sv, "autoTap") && (!isNum(sv.autoTap) || sv.autoTap < 0 || sv.autoTap > AUTOTAP.maxLevel)) return false;
+  if (!sv.upgrades || typeof sv.upgrades !== "object" || Array.isArray(sv.upgrades)) return false;
+  if (!sv.biz || typeof sv.biz !== "object" || Array.isArray(sv.biz)) return false;
+  if (!sv.life || typeof sv.life !== "object" || Array.isArray(sv.life)) return false;
+  if (!sv.assets || typeof sv.assets !== "object" || Array.isArray(sv.assets)) return false;
+  var ok = true;
+  UPGRADES.forEach(function(u){
+    if (Object.prototype.hasOwnProperty.call(sv.upgrades, u.id) && !isNum(sv.upgrades[u.id])) ok = false;
+  });
+  BUSINESSES.forEach(function(b, i){
+    if (Object.prototype.hasOwnProperty.call(sv.biz, i) && !isNum(sv.biz[i])) ok = false;
+  });
+  LIFESTYLE.forEach(function(g){
+    if (Object.prototype.hasOwnProperty.call(sv.life, g.cat)){
+      var v = sv.life[g.cat];
+      if (!isNum(v) || v < 0 || v > g.items.length - 1) ok = false;
+    }
+  });
+  ASSETS.forEach(function(a){
+    if (Object.prototype.hasOwnProperty.call(sv.assets, a.id)){
+      var sa = sv.assets[a.id];
+      if (!sa || typeof sa !== "object" || Array.isArray(sa)) { ok = false; return; }
+      if (Object.prototype.hasOwnProperty.call(sa, "price") && (!isNum(sa.price) || sa.price <= 0)) ok = false;
+      if (Object.prototype.hasOwnProperty.call(sa, "held") && !isNum(sa.held)) ok = false;
+      if (Object.prototype.hasOwnProperty.call(sa, "spent") && !isNum(sa.spent)) ok = false;
+    }
+  });
+  return ok;
+}
+
+function applyImportedSave(data){
+  var sv = data.state;
+  var ns = freshState();
+  UPGRADES.forEach(function(u){ ns.upgrades[u.id] = 0; });
+  BUSINESSES.forEach(function(b, i){ ns.biz[i] = 0; });
+  LIFESTYLE.forEach(function(g){ ns.life[g.cat] = 0; });
+  ASSETS.forEach(function(a){ ns.assets[a.id] = { price: a.startPrice, held: 0, spent: 0, history: [a.startPrice] }; });
+  function num(v, fallback){ return (typeof v === "number" && isFinite(v)) ? v : fallback; }
+  ns.money = Math.max(0, num(sv.money, 0));
+  ns.totalEarned = Math.max(0, num(sv.totalEarned, 0));
+  ns.clicks = Math.max(0, Math.floor(num(sv.clicks, 0)));
+  ns.health = Math.max(0, Math.min(100, num(sv.health, 70)));
+  ns.happy = Math.max(0, Math.min(100, num(sv.happy, 70)));
+  ns.eduIndex = Math.max(-1, Math.min(EDUCATION.length - 1, Math.floor(num(sv.eduIndex, -1))));
+  ns.jobIndex = Math.max(0, Math.min(JOBS.length - 1, Math.floor(num(sv.jobIndex, 0))));
+  ns.chickens = Math.max(0, Math.min(9999, Math.floor(num(sv.chickens, CHICKEN.startCount))));
+  ns.autoTap = Math.max(0, Math.min(AUTOTAP.maxLevel, Math.floor(num(sv.autoTap, 0))));
+  ns.lastTier = Math.max(0, Math.min(TIERS.length - 1, Math.floor(num(sv.lastTier, 0))));
+  UPGRADES.forEach(function(u){ if (typeof sv.upgrades[u.id] === "number" && isFinite(sv.upgrades[u.id])) ns.upgrades[u.id] = Math.max(0, Math.floor(sv.upgrades[u.id])); });
+  BUSINESSES.forEach(function(b, i){ if (typeof sv.biz[i] === "number" && isFinite(sv.biz[i])) ns.biz[i] = Math.max(0, Math.floor(sv.biz[i])); });
+  LIFESTYLE.forEach(function(g){ if (typeof sv.life[g.cat] === "number" && isFinite(sv.life[g.cat])) ns.life[g.cat] = Math.max(0, Math.min(g.items.length - 1, Math.floor(sv.life[g.cat]))); });
+  ASSETS.forEach(function(a){
+    var sa = sv.assets[a.id];
+    if (!sa) return;
+    var st = ns.assets[a.id];
+    if (typeof sa.price === "number" && isFinite(sa.price) && sa.price > 0) st.price = sa.price;
+    if (typeof sa.held === "number" && isFinite(sa.held)) st.held = Math.max(0, sa.held);
+    if (typeof sa.spent === "number" && isFinite(sa.spent)) st.spent = Math.max(0, sa.spent);
+    if (sa.history && sa.history.length) {
+      var h = sa.history.filter(function(p){ return typeof p === "number" && isFinite(p) && p > 0; });
+      if (h.length) st.history = h.slice(-40);
+    }
+  });
+  if (sv.achieved) ACHIEVEMENTS.forEach(function(ac, i){ if (sv.achieved[i]) ns.achieved[i] = true; });
+  ns.startTime = Date.now();
+  S = ns;
+}
+
+var _importInput = $("importSaveFile");
+$("importSaveBtn").addEventListener("click", function(){
+  _importInput.value = "";
+  _importInput.click();
+});
+_importInput.addEventListener("change", function(){
+  var file = _importInput.files && _importInput.files[0];
+  if (!file) return;
+  var reader = new FileReader();
+  reader.onload = function(){
+    var data;
+    try { data = JSON.parse(reader.result); }
+    catch (e) {
+      toast("⚠️", tr("importInvalidJson"));
+      return;
+    }
+    if (!isValidSaveData(data)) {
+      toast("⚠️", tr("importInvalid"));
+      return;
+    }
+    applyImportedSave(data);
+    if (data.lang === "id" || data.lang === "en") setLang(data.lang);
+    _offlineGain = 0; _offlineSeconds = 0;
+    $("tapLabel").innerHTML = LName(JOBS[S.jobIndex]).toUpperCase().replace(/ /g, "<br>");
+    doSave();
+    refreshLists();
+    updateHUD();
+    logKey("importLog");
+    toast("✅", tr("importOk"));
+  };
+  reader.onerror = function(){
+    toast("⚠️", tr("importReadFail"));
+  };
+  reader.readAsText(file);
+});
+
+/* ================= HUD ================= */
+function updateHUD(){
+  $("moneyValue").textContent = fmt(S.money);
+  $("perClickPill").textContent = fmt(clickValue());
+  $("perSecPill").textContent = fmt(totalPerSec()) + tr("perSec");
+  $("totalPill").textContent = fmt(S.totalEarned);
+  $("tapValue").textContent = "+" + fmt(clickValue()) + " " + tr("perTapSuffix");
+  $("healthVal").textContent = Math.floor(S.health) + "/100";
+  $("happyVal").textContent = Math.floor(S.happy) + "/100";
+  $("healthFill").style.width = S.health + "%";
+  $("happyFill").style.width = S.happy + "%";
+  $("needWarning").classList.toggle("show", S.health < 20 || S.happy < 20);
+  var ti = tierIndex();
+  var t = TIERS[ti];
+  $("tierName").textContent = LName(t);
+  $("tierDesc").textContent = LDesc(t);
+  $("avatarEmoji").textContent = t.emoji;
+  if (ti !== S.lastTier && S.totalEarned > 0){
+    S.lastTier = ti;
+    toast("🎉", tr("tierUp", LName(t)));
+    logKey("tierUpLog", ti);
+  }
+  var next = TIERS[ti + 1];
+  if (next){
+    var pct = Math.min(100, ((S.totalEarned - t.min) / (next.min - t.min)) * 100);
+    $("tierFill").style.width = pct + "%";
+    $("tierProgressText").textContent = tr("earnMore", { amount: fmt(next.min - S.totalEarned), name: LName(next) });
+  } else {
+    $("tierFill").style.width = "100%";
+    $("tierProgressText").textContent = tr("topTier");
+  }
+  $("avatarJob").textContent = LName(JOBS[S.jobIndex]);
+  $("avatarEdu").textContent = (S.eduIndex >= 0 ? LName(EDUCATION[S.eduIndex]) : tr("noSchool")) + " • " + LName(t);
+  $("statClicks").textContent = S.clicks.toLocaleString(lang === "en" ? "en-US" : "id-ID");
+  var sc = $("statChickens"); if (sc) sc.textContent = S.chickens + " 🐔";
+  var sa = $("statAutoTap"); if (sa) sa.textContent = S.autoTap > 0 ? ("Lv. " + S.autoTap + " • " + autoTapRate() + tr("perSec")) : tr("off");
+  var ci2 = $("chickenIncomeVal"); if (ci2) ci2.textContent = fmt(chickenIncomeRaw() * (1 + lifeBonus()) * needPenalty()) + tr("perSec");
+  var ai2 = $("autoTapIncomeVal"); if (ai2) ai2.textContent = fmt(autoTapIncome()) + tr("perSec");
+  var bizCount = 0; BUSINESSES.forEach(function(b,i){ bizCount += S.biz[i]; });
+  $("statBusiness").textContent = bizCount;
+  $("statMultiplier").textContent = "×" + dec(1 + lifeBonus(), 2);
+  var mins = Math.floor((Date.now() - S.startTime) / 60000);
+  $("statTime").textContent = mins < 60 ? mins + " " + tr("min") : tr("hoursMins", { h: Math.floor(mins / 60), m: mins % 60 });
+  $("bizIncomePill").textContent = fmt(bizIncome() * (1 + lifeBonus())) + tr("perSec");
+  var pv = 0, spent = 0;
+  ASSETS.forEach(function(a){
+    var st = S.assets[a.id];
+    pv += st.held * (st.price / a.startPrice);
+    spent += st.spent;
+  });
+  $("portfolioValue").textContent = fmt(pv);
+  $("cashPill").textContent = fmt(S.money);
+  $("portfolioPnl").textContent = spent > 0
+    ? tr(pv - spent >= 0 ? "pnlProfit" : "pnlLoss", { pnl: fmt(Math.abs(pv - spent)), spent: fmt(spent) })
+    : tr("noInvest");
+  /* consumable prices scale with tier */
+  $("eatCost").textContent = tr("costHealth", { cost: fmt(8 + tierIndex() * 30), gain: 22 });
+  $("doctorCost").textContent = tr("costHealth", { cost: fmt(120 + tierIndex() * 220), gain: 55 });
+  $("funCost").textContent = tr("costHappy", { cost: fmt(10 + tierIndex() * 35), gain: 22 });
+  $("tripCost").textContent = tr("costHappy", { cost: fmt(250 + tierIndex() * 480), gain: 60 });
+  /* achievements */
+  ACHIEVEMENTS.forEach(function(ac, i){
+    if (!S.achieved[i] && S.totalEarned >= ac.at){
+      S.achieved[i] = true;
+      toast("🏆", LText(ac));
+      logKey("achievementLog", i);
+    }
+  });
+}
+
+/* ================= GAME LOOP ================= */
+setInterval(function(){
+  var gain = totalPerSec() * 0.1;
+  S.money += gain; S.totalEarned += gain;
+  S.health = Math.max(0, Math.min(100, S.health + lifeRegen("health") * 0.1 - 0.012));
+  S.happy = Math.max(0, Math.min(100, S.happy + lifeRegen("happy") * 0.1 - 0.010));
+  updateHUD();
+}, 100);
+
+/* Market movement */
+setInterval(function(){
+  ASSETS.forEach(function(a){
+    var st = S.assets[a.id];
+    var drift = (Math.random() - 0.485) * 2 * a.vol;
+    st.price = Math.max(a.startPrice * 0.25, st.price * (1 + drift));
+    st.history.push(st.price);
+    if (st.history.length > 40) st.history.shift();
+  });
+  if ($("panel-invest").classList.contains("active")) renderAssets();
+  updateHUD();
+}, 2000);
+
+/* Affordability refresh for lists */
+setInterval(function(){ refreshLists(); }, 4000);
+
+/* ================= INIT ================= */
+/* Pulihkan label tombol sesuai pekerjaan tersimpan */
+if (S.jobIndex !== 0) {
+  $("tapLabel").innerHTML = LName(JOBS[S.jobIndex]).toUpperCase().replace(/ /g, "<br>");
+}
+/* Penghasilan pasif selama offline — dari gaji + telur ayam + bisnis + auto-ketuk (per detik), maks 8 jam */
+var _isReturning = (S.totalEarned > 0 || S.clicks > 0);
+if (_offlineSeconds > 60) {
+  var _cappedSecs = Math.min(_offlineSeconds, 8 * 3600);
+  var _rate = totalPerSec();
+  _offlineGain = _rate * _cappedSecs;
+  if (!(_offlineGain > 0)) _offlineGain = 0;
+  if (_offlineGain > 0) {
+    S.money += _offlineGain;
+    S.totalEarned += _offlineGain;
+  }
+}
+applyLang();
+if (_isReturning) {
+  logKey("welcomeBackLog");
+  if (_offlineGain > 0) logKey("offlineLog", _offlineGain);
+} else {
+  logKey("firstStartLog");
+}
+if (_offlineGain > 0) {
+  setTimeout(function(){ toast("💰", tr("welcomeBackOffline", fmt(_offlineGain))); }, 600);
+} else if (_isReturning) {
+  setTimeout(function(){ toast("👋", tr("welcomeBack")); }, 600);
+} else {
+  setTimeout(function(){ toast("🐔", tr("welcomeNew")); }, 600);
+}
+/* Autosave berkala + saat halaman mau ditutup / disembunyikan */
+setInterval(function(){ saveGame(true); }, 3000);
+window.addEventListener("beforeunload", function(){ doSave(); });
+document.addEventListener("visibilitychange", function(){ if (document.visibilityState === "hidden") doSave(); });
+</script>
+</body>
+</html>
