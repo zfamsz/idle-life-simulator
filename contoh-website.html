@@ -1,0 +1,725 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Website Pertama Saya</title>
+
+  <!--
+    Bagian <head> berisi informasi tentang halaman yang tidak terlihat langsung
+    oleh pengunjung: judul tab, pengaturan karakter, dan pengaturan tampilan di HP.
+    Tag <meta name="viewport"> wajib ada supaya halaman tidak mengecil di layar HP.
+  -->
+
+  <style>
+    /* ====== VARIABEL WARNA ======
+       Kita simpan warna di satu tempat supaya mudah diubah.
+       Saat tema gelap aktif, nilai variabel ini diganti lewat atribut data-tema. */
+    :root {
+      --warna-latar: #f7f7fb;
+      --warna-kartu: #ffffff;
+      --warna-teks: #22222a;
+      --warna-teks-lembut: #5b5b6b;
+      --warna-utama: #4f46e5;
+      --warna-utama-terang: #eef0ff;
+      --warna-garis: #dededf;
+      --warna-bayangan: rgba(0, 0, 0, 0.08);
+      --radius: 14px;
+    }
+
+    /* Tema gelap: hanya mengganti nilai variabel, jadi tidak perlu menulis ulang semua CSS. */
+    body[data-tema="gelap"] {
+      --warna-latar: #14141c;
+      --warna-kartu: #1e1e2a;
+      --warna-teks: #f2f2f7;
+      --warna-teks-lembut: #b3b3c4;
+      --warna-utama: #8b8bff;
+      --warna-utama-terang: #2b2b40;
+      --warna-garis: #33334a;
+      --warna-bayangan: rgba(0, 0, 0, 0.5);
+    }
+
+    /* ====== PENGATURAN DASAR ======
+       Mengatur huruf sistem, warna dasar, dan cara perhitungan ukuran kotak.
+       border-box membuat padding tidak menambah lebar elemen. */
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      font-family: system-ui, -apple-system, "Segoe UI", Roboto, Arial, sans-serif;
+      background-color: var(--warna-latar);
+      color: var(--warna-teks);
+      line-height: 1.6;
+      transition: background-color 0.3s, color 0.3s;
+    }
+
+    /* ====== WADAH KONTEN ======
+       Membatasi lebar isi dan menaruhnya di tengah layar. */
+    .wadah {
+      width: 100%;
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 0 20px;
+    }
+
+    /* ====== HEADER DAN NAVIGASI ======
+       Flexbox dipakai agar logo di kiri dan menu di kanan sejajar satu baris. */
+    header {
+      background-color: var(--warna-kartu);
+      border-bottom: 1px solid var(--warna-garis);
+      position: sticky;
+      top: 0;
+      z-index: 10;
+    }
+
+    .baris-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 14px 0;
+      flex-wrap: wrap;
+    }
+
+    .logo {
+      font-weight: 700;
+      font-size: 1.1rem;
+      color: var(--warna-utama);
+      text-decoration: none;
+    }
+
+    nav ul {
+      display: flex;
+      gap: 16px;
+      list-style: none;
+      margin: 0;
+      padding: 0;
+      flex-wrap: wrap;
+    }
+
+    nav a {
+      color: var(--warna-teks-lembut);
+      text-decoration: none;
+      font-size: 0.95rem;
+    }
+
+    nav a:hover {
+      color: var(--warna-utama);
+      text-decoration: underline;
+    }
+
+    /* Tombol ganti tema dibuat sederhana agar mudah diklik di HP maupun laptop. */
+    #tombolTema {
+      border: 1px solid var(--warna-garis);
+      background-color: var(--warna-utama-terang);
+      color: var(--warna-teks);
+      padding: 8px 14px;
+      border-radius: 999px;
+      font-size: 0.9rem;
+      cursor: pointer;
+      font-family: inherit;
+    }
+
+    /* ====== BAGIAN HERO (SAMBUTAN) ======
+       Grid dipakai agar foto dan teks berdampingan di layar lebar. */
+    .hero {
+      display: grid;
+      grid-template-columns: 160px 1fr;
+      gap: 28px;
+      align-items: center;
+      padding: 60px 0 40px;
+    }
+
+    /* Lingkaran inisial sebagai pengganti foto, supaya tidak butuh file gambar eksternal. */
+    .avatar {
+      width: 140px;
+      height: 140px;
+      border-radius: 50%;
+      background-color: var(--warna-utama-terang);
+      color: var(--warna-utama);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 2.4rem;
+      font-weight: 700;
+      border: 3px solid var(--warna-utama);
+      margin: 0;
+    }
+
+    .hero h1 {
+      margin: 0 0 8px;
+      font-size: 2rem;
+      line-height: 1.25;
+    }
+
+    .hero p {
+      margin: 0 0 16px;
+      color: var(--warna-teks-lembut);
+      max-width: 55ch;
+    }
+
+    .tombol-utama {
+      display: inline-block;
+      background-color: var(--warna-utama);
+      color: #ffffff;
+      padding: 10px 20px;
+      border-radius: 999px;
+      text-decoration: none;
+      font-weight: 600;
+    }
+
+    .tombol-utama:hover {
+      opacity: 0.9;
+    }
+
+    /* ====== JUDUL SETIAP BAGIAN ======
+       Aturan umum agar semua judul bagian tampil konsisten. */
+    .judul-bagian {
+      font-size: 1.4rem;
+      margin: 0 0 6px;
+    }
+
+    .subjudul-bagian {
+      margin: 0 0 24px;
+      color: var(--warna-teks-lembut);
+      font-size: 0.95rem;
+    }
+
+    section {
+      padding: 40px 0;
+    }
+
+    /* ====== BAGIAN TENTANG ======
+       Membuat kotak kartu dengan jarak dalam dan sudut membulat. */
+    .kotak-tentang {
+      background-color: var(--warna-kartu);
+      border: 1px solid var(--warna-garis);
+      border-radius: var(--radius);
+      padding: 24px;
+      box-shadow: 0 2px 10px var(--warna-bayangan);
+    }
+
+    .kotak-tentang p {
+      margin: 0 0 12px;
+    }
+
+    .kotak-tentang p:last-child {
+      margin-bottom: 0;
+    }
+
+    /* Daftar keahlian memakai flexbox agar menyesuaikan lebar layar. */
+    .daftar-keahlian {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      list-style: none;
+      padding: 0;
+      margin: 16px 0 0;
+    }
+
+    .daftar-keahlian li {
+      background-color: var(--warna-utama-terang);
+      color: var(--warna-utama);
+      border-radius: 999px;
+      padding: 4px 12px;
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+
+    /* ====== KARTU HOBI ======
+       Grid dengan tiga kolom otomatis. minmax membuat kartu tidak terlalu sempit. */
+    .grid-hobi {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+    }
+
+    .kartu {
+      background-color: var(--warna-kartu);
+      border: 1px solid var(--warna-garis);
+      border-radius: var(--radius);
+      padding: 20px;
+      box-shadow: 0 2px 10px var(--warna-bayangan);
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Ikon dibuat dari emoji agar tidak perlu memuat gambar dari internet. */
+    .ikon-kartu {
+      font-size: 1.8rem;
+      margin-bottom: 8px;
+    }
+
+    .kartu h3 {
+      margin: 0 0 6px;
+      font-size: 1.05rem;
+    }
+
+    .kartu p {
+      margin: 0;
+      color: var(--warna-teks-lembut);
+      font-size: 0.92rem;
+    }
+
+    /* ====== BAGIAN INTERAKTIF ======
+       Dua kotak berdampingan: permainan klik dan formulir nama. */
+    .grid-interaktif {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+
+    .kotak-interaktif {
+      background-color: var(--warna-kartu);
+      border: 1px solid var(--warna-garis);
+      border-radius: var(--radius);
+      padding: 22px;
+      box-shadow: 0 2px 10px var(--warna-bayangan);
+    }
+
+    .kotak-interaktif h3 {
+      margin: 0 0 6px;
+      font-size: 1.05rem;
+    }
+
+    .kotak-interaktif p {
+      margin: 0 0 14px;
+      color: var(--warna-teks-lembut);
+      font-size: 0.92rem;
+    }
+
+    /* Tampilan skor dibuat besar supaya mudah dilihat. */
+    .skor {
+      font-size: 2.2rem;
+      font-weight: 700;
+      color: var(--warna-utama);
+      margin: 0 0 12px;
+      line-height: 1.1;
+    }
+
+    #tombolKlik,
+    button[type="submit"] {
+      background-color: var(--warna-utama);
+      color: #ffffff;
+      border: none;
+      padding: 10px 18px;
+      border-radius: 10px;
+      font-size: 0.95rem;
+      font-weight: 600;
+      cursor: pointer;
+      font-family: inherit;
+    }
+
+    #tombolKlik:hover,
+    button[type="submit"]:hover {
+      opacity: 0.9;
+    }
+
+    /* Efek kecil saat tombol ditekan, memberi rasa responsif. */
+    #tombolKlik:active {
+      transform: scale(0.97);
+    }
+
+    /* Tombol reset dibuat lebih tenang agar tidak bersaing dengan tombol utama. */
+    #tombolReset {
+      background-color: transparent;
+      border: 1px solid var(--warna-garis);
+      color: var(--warna-teks-lembut);
+      padding: 10px 14px;
+      border-radius: 10px;
+      cursor: pointer;
+      font-family: inherit;
+      font-size: 0.9rem;
+      margin-left: 8px;
+    }
+
+    /* Formulir: label di atas input, menggunakan flexbox vertikal. */
+    .formulir {
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+    }
+
+    .formulir label {
+      font-size: 0.9rem;
+      font-weight: 600;
+    }
+
+    .formulir input {
+      padding: 10px 12px;
+      border: 1px solid var(--warna-garis);
+      border-radius: 10px;
+      background-color: var(--warna-latar);
+      color: var(--warna-teks);
+      font-family: inherit;
+      font-size: 0.95rem;
+    }
+
+    /* Warna garis tepi saat input sedang diisi, tanda fokus untuk pengguna keyboard. */
+    .formulir input:focus {
+      outline: 2px solid var(--warna-utama);
+      outline-offset: 1px;
+    }
+
+    /* Kotak hasil sapaan: awalnya kosong, diisi oleh JavaScript. */
+    #hasilSapaan {
+      margin-top: 12px;
+      padding: 12px 14px;
+      border-radius: 10px;
+      background-color: var(--warna-utama-terang);
+      color: var(--warna-teks);
+      font-size: 0.95rem;
+      display: none;
+    }
+
+    /* ====== FOOTER ======
+       Penutup halaman dengan teks kecil dan garis pemisah. */
+    footer {
+      border-top: 1px solid var(--warna-garis);
+      background-color: var(--warna-kartu);
+      padding: 24px 0;
+      margin-top: 20px;
+    }
+
+    .isi-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+      font-size: 0.88rem;
+      color: var(--warna-teks-lembut);
+    }
+
+    .isi-footer p {
+      margin: 0;
+    }
+
+    /* ====== MEDIA QUERY UNTUK HP ======
+       Jika lebar layar 720px atau kurang, tata letak diubah menjadi satu kolom
+       supaya teks tidak sempit dan tombol mudah ditekan. */
+    @media (max-width: 720px) {
+      .hero {
+        grid-template-columns: 1fr;
+        text-align: center;
+        padding-top: 40px;
+      }
+
+      .hero p {
+        margin-left: auto;
+        margin-right: auto;
+      }
+
+      .avatar {
+        margin: 0 auto;
+        width: 110px;
+        height: 110px;
+        font-size: 2rem;
+      }
+
+      .grid-hobi {
+        grid-template-columns: 1fr;
+      }
+
+      .grid-interaktif {
+        grid-template-columns: 1fr;
+      }
+
+      .hero h1 {
+        font-size: 1.6rem;
+      }
+
+      .isi-footer {
+        justify-content: center;
+        text-align: center;
+      }
+
+      nav ul {
+        gap: 12px;
+      }
+    }
+  </style>
+</head>
+<body data-tema="terang">
+
+  <!--
+    BAGIAN HEADER
+    Berisi nama situs dan menu navigasi.
+    Ditulis sebagai <header> di luar <main> karena memang pengantar halaman,
+    dan memakai position: sticky agar menu tetap terlihat saat halaman digulir.
+  -->
+  <header>
+    <div class="wadah baris-header">
+      <a href="#atas" class="logo">Rina Belajar Web</a>
+
+      <!-- Menu navigasi memakai tautan anchor (#) untuk melompat ke bagian halaman. -->
+      <nav aria-label="Navigasi utama">
+        <ul>
+          <li><a href="#tentang">Tentang</a></li>
+          <li><a href="#hobi">Hobi</a></li>
+          <li><a href="#interaktif">Interaktif</a></li>
+        </ul>
+      </nav>
+
+      <!-- Tombol ini tidak melakukan apa pun sendiri; JavaScript di bagian bawah yang mengubah tema. -->
+      <button id="tombolTema" type="button">Mode Gelap</button>
+    </div>
+  </header>
+
+  <!-- <main> menandai isi utama halaman, hanya boleh ada satu dalam satu dokumen. -->
+  <main class="wadah" id="atas">
+
+    <!--
+      BAGIAN HERO
+      Kesan pertama pengunjung: siapa pemilik halaman ini.
+      Memakai <section> agar strukturnya jelas, dan avatar berupa lingkaran inisial
+      supaya tidak membutuhkan berkas gambar.
+    -->
+    <section class="hero">
+      <p class="avatar" aria-hidden="true">RB</p>
+      <div>
+        <h1>Halo, saya Rina. Ini website pertama saya.</h1>
+        <p>
+          Saya sedang belajar membuat halaman web dari nol. Halaman ini saya tulis
+          sendiri dengan HTML, CSS, dan sedikit JavaScript, tanpa library apa pun.
+          Tujuannya sederhana: berlatih sambil membuat sesuatu yang bisa dibuka
+          di browser.
+        </p>
+        <a class="tombol-utama" href="#tentang">Kenali saya lebih dekat</a>
+      </div>
+    </section>
+
+    <!--
+      BAGIAN TENTANG
+      Menjelaskan latar belakang singkat dalam satu kotak.
+      Dipisah dari hero agar pengunjung bisa melompat langsung ke sini dari menu.
+    -->
+    <section id="tentang">
+      <h2 class="judul-bagian">Tentang Saya</h2>
+      <p class="subjudul-bagian">Sedikit cerita tentang perjalanan belajar saya.</p>
+
+      <div class="kotak-tentang">
+        <p>
+          Nama saya Rina. Saya baru mulai belajar pemrograman web beberapa minggu
+          terakhir. Awalnya saya hanya penasaran bagaimana sebuah halaman bisa
+          muncul di layar, sekarang saya sudah bisa menulis struktur HTML sendiri.
+        </p>
+        <p>
+          Saya belajar sedikit demi sedikit setiap hari. Kadang hanya 30 menit,
+          kadang sampai lupa waktu. Yang penting konsisten, karena setiap baris
+          kode yang saya tulis membuat saya lebih paham.
+        </p>
+
+        <!-- Daftar ini memakai <ul> karena urutannya tidak penting. -->
+        <ul class="daftar-keahlian">
+          <li>HTML dasar</li>
+          <li>CSS dasar</li>
+          <li>Flexbox</li>
+          <li>JavaScript pemula</li>
+        </ul>
+      </div>
+    </section>
+
+    <!--
+      BAGIAN HOBI
+      Tiga kartu hobi. Grid tiga kolom dipakai karena jumlahnya tepat tiga,
+      sehingga tampil rapi sejajar di layar lebar dan menumpuk di HP.
+    -->
+    <section id="hobi">
+      <h2 class="judul-bagian">Hobi Saya</h2>
+      <p class="subjudul-bagian">Hal-hal yang saya lakukan saat tidak sedang belajar kode.</p>
+
+      <div class="grid-hobi">
+
+        <!-- Kartu 1: membaca -->
+        <article class="kartu">
+          <p class="ikon-kartu" aria-hidden="true">📚</p>
+          <h3>Membaca</h3>
+          <p>
+            Saya suka buku cerita pendek dan komik. Membaca membantu saya
+            menemukan kata-kata baru yang berguna saat menulis teks di website.
+          </p>
+        </article>
+
+        <!-- Kartu 2: bersepeda -->
+        <article class="kartu">
+          <p class="ikon-kartu" aria-hidden="true">🚲</p>
+          <h3>Bersepeda</h3>
+          <p>
+            Setiap akhir pekan saya bersepeda keliling komplek. Udara pagi
+            membuat kepala lebih segar sebelum kembali belajar.
+          </p>
+        </article>
+
+        <!-- Kartu 3: memasak -->
+        <article class="kartu">
+          <p class="ikon-kartu" aria-hidden="true">🍳</p>
+          <h3>Memasak</h3>
+          <p>
+            Memasak mengajarkan saya mengikuti langkah dengan urutan yang benar,
+            mirip seperti menulis kode dari atas ke bawah.
+          </p>
+        </article>
+
+      </div>
+    </section>
+
+    <!--
+      BAGIAN INTERAKTIF
+      Di sini JavaScript mulai bekerja. Ada dua kotak:
+      permainan klik untuk berlatih menghitung, dan formulir nama untuk berlatih
+      mengambil nilai dari input lalu menampilkannya kembali.
+    -->
+    <section id="interaktif">
+      <h2 class="judul-bagian">Coba Sendiri</h2>
+      <p class="subjudul-bagian">Bagian ini berubah saat kamu mengklik atau mengetik.</p>
+
+      <div class="grid-interaktif">
+
+        <!-- KOTAK 1: permainan klik.
+             Skor disimpan di dalam variabel JavaScript, bukan di HTML,
+             lalu ditampilkan ke elemen <p id="skor"> setiap kali tombol ditekan. -->
+        <div class="kotak-interaktif">
+          <h3>Permainan Klik</h3>
+          <p>Tekan tombol di bawah untuk mengumpulkan poin.</p>
+
+          <p class="skor" id="skor" aria-live="polite">0</p>
+
+          <button id="tombolKlik" type="button">Klik Saya (+1)</button>
+          <button id="tombolReset" type="button">Ulangi</button>
+
+          <p id="pesanKlik" style="margin-top: 12px;"></p>
+        </div>
+
+        <!-- KOTAK 2: formulir nama.
+             Atribut <label for> dihubungkan ke <input id> agar klik label
+             langsung memfokuskan input. Formulir ditangani JavaScript,
+             jadi halaman tidak dimuat ulang saat dikirim. -->
+        <div class="kotak-interaktif">
+          <h3>Sapa Saya</h3>
+          <p>Ketik namamu, lalu tekan tombol kirim.</p>
+
+          <form class="formulir" id="formNama">
+            <label for="inputNama">Nama kamu</label>
+            <input
+              type="text"
+              id="inputNama"
+              name="nama"
+              placeholder="Contoh: Budi"
+              autocomplete="off"
+            />
+            <button type="submit">Kirim Sapaan</button>
+          </form>
+
+          <!-- Kotak ini kosong pada awalnya dan disembunyikan oleh CSS. -->
+          <p id="hasilSapaan" aria-live="polite"></p>
+        </div>
+
+      </div>
+    </section>
+
+  </main>
+
+  <!--
+    FOOTER
+    Penutup halaman. Ditulis di luar <main> karena bukan bagian isi utama.
+    Berisi hak cipta dan ajakan kecil untuk terus belajar.
+  -->
+  <footer>
+    <div class="wadah isi-footer">
+      <p>&copy; 2026 Rina Belajar Web. Dibuat sambil belajar.</p>
+      <p>Dibangun dengan HTML, CSS, dan JavaScript murni.</p>
+    </div>
+  </footer>
+
+  <!--
+    JAVASCRIPT
+    Diletakkan di akhir <body> supaya semua elemen HTML sudah ada saat
+    kode ini dijalankan. Dengan begitu, kita bisa langsung mencari elemen
+    tanpa perlu menunggu event "load".
+  -->
+  <script>
+    /* ====== INTERAKSI 1: GANTI TEMA GELAP DAN TERANG ======
+       Cara kerja: tema disimpan pada atribut data-tema di <body>.
+       CSS sudah menyiapkan dua set nilai variabel, jadi JavaScript hanya
+       perlu mengganti atribut itu. Teks tombol juga ikut berubah. */
+    const tombolTema = document.getElementById("tombolTema");
+
+    tombolTema.addEventListener("click", function () {
+      // Baca tema yang sedang aktif sekarang.
+      const temaSekarang = document.body.getAttribute("data-tema");
+
+      // Tentukan tema berikutnya: kalau terang jadi gelap, dan sebaliknya.
+      const temaBaru = temaSekarang === "gelap" ? "terang" : "gelap";
+
+      // Terapkan tema baru ke seluruh halaman.
+      document.body.setAttribute("data-tema", temaBaru);
+
+      // Ubah tulisan pada tombol agar sesuai dengan tema yang akan dipakai berikutnya.
+      tombolTema.textContent = temaBaru === "gelap" ? "Mode Terang" : "Mode Gelap";
+    });
+
+    /* ====== INTERAKSI 2: PERMAINAN KLIK ======
+       Cara kerja: satu variabel menyimpan jumlah poin. Setiap klik menambah
+       satu, lalu angka di layar diperbarui. Kita pakai Number() saat membaca
+       ulang teks skor agar aman walaupun isinya berupa teks. */
+    let skor = 0;
+
+    const elemenSkor = document.getElementById("skor");
+    const tombolKlik = document.getElementById("tombolKlik");
+    const tombolReset = document.getElementById("tombolReset");
+    const pesanKlik = document.getElementById("pesanKlik");
+
+    tombolKlik.addEventListener("click", function () {
+      skor = skor + 1;                     // Tambah poin.
+      elemenSkor.textContent = skor;       // Tampilkan skor terbaru.
+
+      // Pesan kecil sebagai umpan balik, dan berubah saat mencapai angka tertentu.
+      if (skor === 10) {
+        pesanKlik.textContent = "Sepuluh poin! Kamu sudah paham cara kerjanya.";
+      } else if (skor === 25) {
+        pesanKlik.textContent = "Dua puluh lima poin. Luar biasa!";
+      } else {
+        pesanKlik.textContent = "Poin bertambah. Terus klik!";
+      }
+    });
+
+    // Tombol ulangi mengembalikan skor ke nol tanpa memuat ulang halaman.
+    tombolReset.addEventListener("click", function () {
+      skor = 0;
+      elemenSkor.textContent = skor;
+      pesanKlik.textContent = "Skor sudah diulang dari nol.";
+    });
+
+    /* ====== INTERAKSI 3: FORMULIR SAPAAN ======
+       Cara kerja: saat formulir dikirim, kita cegah perilaku bawaan browser
+       (memuat ulang halaman) dengan event.preventDefault(). Lalu ambil isi
+       input, periksa apakah kosong, dan tampilkan sapaan. */
+    const formNama = document.getElementById("formNama");
+    const inputNama = document.getElementById("inputNama");
+    const hasilSapaan = document.getElementById("hasilSapaan");
+
+    formNama.addEventListener("submit", function (event) {
+      event.preventDefault(); // Hentikan pengiriman formulir ke server.
+
+      // trim() menghapus spasi di awal dan akhir, supaya nama kosong terdeteksi.
+      const nama = inputNama.value.trim();
+
+      if (nama === "") {
+        hasilSapaan.style.display = "block";
+        hasilSapaan.textContent = "Namamu masih kosong. Coba tulis dulu, ya.";
+        return;
+      }
+
+      // Tampilkan sapaan. Kotak hasil diubah dari tersembunyi menjadi terlihat.
+      hasilSapaan.style.display = "block";
+      hasilSapaan.textContent = "Halo, " + nama + "! Senang kamu mampir ke website pertama saya.";
+
+      // Kosongkan input agar siap dipakai lagi.
+      inputNama.value = "";
+    });
+  </script>
+</body>
+</html>
