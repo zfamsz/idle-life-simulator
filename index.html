@@ -1538,7 +1538,8 @@ function updateHUD(){
   if (_stage && _stage.getAttribute("data-scene") !== _scene) _stage.setAttribute("data-scene", _scene);
   $("tierName").textContent = LName(t);
   $("tierDesc").textContent = LDesc(t);
-  $("avatarEmoji").textContent = t.emoji;
+  /* Avatar kini gambar (bukan emoji): baris emoji tier lama dihapus supaya
+     tidak ada node teks tak terlihat di dalam <img>. */
   if (ti !== S.lastTier && S.totalEarned > 0){
     S.lastTier = ti;
     toast("🎉", tr("tierUp", LName(t)));
