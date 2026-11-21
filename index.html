@@ -313,6 +313,9 @@
   .event-choice{display:block;width:100%;text-align:left;background:var(--surface-2);color:var(--ink);border:1px solid var(--line);border-radius:12px;font-weight:700;font-size:14px;padding:12px;cursor:pointer}
   .event-choice:disabled{opacity:.45;cursor:not-allowed}
   .event-choice small{display:block;font-weight:600;font-size:12px;color:var(--ink-2);margin-top:3px}
+  .skill-prog{height:8px;background:var(--surface-2);border:1px solid var(--line);border-radius:99px;overflow:hidden;margin:10px 0 4px}
+  .skill-prog>div{height:100%;background:#2f8fe0}
+  .skill-time{font-size:12.5px;color:var(--ink-2);font-weight:700}
 </style>
 </head>
 <body>
@@ -446,6 +449,7 @@
         <button class="tab-btn" type="button" data-tab="life" role="tab"><span class="tab-ico">🏠</span><span data-i18n="tabLife">Gaya Hidup</span></button>
         <button class="tab-btn" type="button" data-tab="business" role="tab"><span class="tab-ico">🏪</span><span data-i18n="tabBiz">Bisnis</span></button>
         <button class="tab-btn" type="button" data-tab="invest" role="tab"><span class="tab-ico">📈</span><span data-i18n="tabInvest">Investasi</span></button>
+        <button class="tab-btn" type="button" data-tab="skills" role="tab"><span class="tab-ico">🧠</span><span data-i18n="tabSkills">Keahlian</span></button>
       </div>
     </div>
   </nav>
@@ -509,6 +513,17 @@
       <span class="pill"><span data-i18n="cashLabel">Uang tunai</span> <b id="cashPill">$0</b></span>
     </div>
     <div class="cards" id="assetCards" style="margin-top:12px"></div>
+  </section>
+
+  <!-- ===== Panel: Skills ===== -->
+  <section class="panel" id="panel-skills">
+    <div class="panel-head">
+      <div>
+        <h2 data-i18n="skillsTitle">Keahlian — Latihan Berjangka</h2>
+        <p data-i18n="skillsDesc">Latih skill sampai selesai — makin tinggi levelnya, makin lama latihannya dan makin mahal biayanya, tapi bonusnya permanen.</p>
+      </div>
+    </div>
+    <div class="cards" id="skillCards"></div>
   </section>
 
   <!-- ===== Log ===== -->
@@ -770,6 +785,33 @@ var EVENTS = [
     ] }
 ];
 
+/* ============ KEAHLIAN (skill latihan berjangka ala Idle Guy) ============ */
+/* Tiap skill dilatih dengan timer: bayar sekali, tunggu sampai selesai,
+   level naik + bonus permanen. baseTime = detik latihan level 0,
+   timeMult = pengali durasi per level, baseCost = biaya dalam satuan
+   bayaran per ketuk, costMult = pengali biaya per level. */
+var SKILL_MAX = 50;
+var SKILLS = [
+  { id: "cerdas", icon: "🧠", name: "Kecerdasan", name_en: "Intelligence",
+    desc: "Tiap level: +4% bayaran per ketuk.", desc_en: "Each level: +4% tap pay.",
+    baseTime: 60, timeMult: 1.35, baseCost: 20, costMult: 1.5 },
+  { id: "karisma", icon: "😎", name: "Karisma", name_en: "Charisma",
+    desc: "Tiap level: +4% penghasilan pasif.", desc_en: "Each level: +4% passive income.",
+    baseTime: 60, timeMult: 1.35, baseCost: 20, costMult: 1.5 },
+  { id: "tarik", icon: "🧲", name: "Daya Tarik", name_en: "Attractiveness",
+    desc: "Tiap level: +0,03/dtk regen kebahagiaan.", desc_en: "Each level: +0.03/s happiness regen.",
+    baseTime: 90, timeMult: 1.35, baseCost: 25, costMult: 1.5 },
+  { id: "hoki", icon: "🍀", name: "Keberuntungan", name_en: "Luck",
+    desc: "Tiap level: +2% peluang ketuk kritikal (bayaran 2x).", desc_en: "Each level: +2% critical tap chance (double pay).",
+    baseTime: 90, timeMult: 1.35, baseCost: 25, costMult: 1.5 },
+  { id: "tahan", icon: "🔋", name: "Daya Tahan", name_en: "Endurance",
+    desc: "Tiap level: −10% biaya kesehatan per ketuk.", desc_en: "Each level: −10% health cost per tap.",
+    baseTime: 90, timeMult: 1.35, baseCost: 25, costMult: 1.5 },
+  { id: "stres", icon: "🙏", name: "Ketahanan Stres", name_en: "Stress Resistance",
+    desc: "Tiap level: +0,03/dtk regen kesehatan.", desc_en: "Each level: +0.03/s health regen.",
+    baseTime: 90, timeMult: 1.35, baseCost: 25, costMult: 1.5 }
+];
+
 /* ============ AYAM & AUTO-KETUK (aktivitas awal) ============ */
 /* Ayam: peliharaan pertama pemain. Bertelur otomatis, telur terjual
    sendiri = penghasilan pasif sejak awal, tanpa harus klik terus. */
@@ -820,6 +862,14 @@ var I18N = {
   tabLife: { id: "Gaya Hidup", en: "Lifestyle" },
   tabBiz: { id: "Bisnis", en: "Business" },
   tabInvest: { id: "Investasi", en: "Investments" },
+  tabSkills: { id: "Keahlian", en: "Skills" },
+  skillsTitle: { id: "Keahlian — Latihan Berjangka", en: "Skills — Timed Training" },
+  skillsDesc: { id: "Latih skill sampai selesai — makin tinggi levelnya, makin lama latihannya dan makin mahal biayanya, tapi bonusnya permanen.", en: "Train a skill until it finishes — the higher the level, the longer the training and the higher the cost, but the bonus is permanent." },
+  skillTrainBtn: { id: "Latih", en: "Train" },
+  skillTraining: { id: "Berlatih…", en: "Training…" },
+  skillMax: { id: "Level Maksimal", en: "Max Level" },
+  skillUpLog: { id: function(a){ var sk = skillById(a.id); return "🧠 <b>" + (sk ? sk.name : a.id) + "</b> naik ke <b>Level " + a.lv + "</b>! Bonus permanen aktif."; }, en: function(a){ var sk = skillById(a.id); return "🧠 <b>" + (sk ? sk.name_en : a.id) + "</b> reached <b>Level " + a.lv + "</b>! Permanent bonus active."; } },
+  skillUpToast: { id: function(a){ var sk = skillById(a.id); return (sk ? sk.name : a.id) + " naik ke Level " + a.lv + "!"; }, en: function(a){ var sk = skillById(a.id); return (sk ? sk.name_en : a.id) + " reached Level " + a.lv + "!"; } },
   careerTitle: { id: "Karier & Pendidikan", en: "Career & Education" },
   careerDesc: { id: "Sekolah dulu biar bisa naik jabatan. Pekerjaan yang aktif nentuin bayaran per ketuk + gaji pasif tiap detik — kamu tetap dibayar walau lagi nggak ngetuk.", en: "Study first so you can climb the career ladder. Your active job sets your pay per tap + passive salary every second — you still get paid even when you're not tapping." },
   secEdu: { id: "🎓 Pendidikan — beli berurutan", en: "🎓 Education — buy in order" },
@@ -1005,7 +1055,8 @@ function freshState(){
     chickens: CHICKEN.startCount, autoTap: 0,
     upgrades: {}, biz: {}, life: {},
     assets: {}, achieved: {}, lastTier: 0,
-    lastEventAt: Date.now(), eventsSeen: {}
+    lastEventAt: Date.now(), eventsSeen: {},
+    skills: {}
   };
 }
 S = freshState();
@@ -1013,6 +1064,7 @@ UPGRADES.forEach(function(u){ S.upgrades[u.id] = 0; });
 BUSINESSES.forEach(function(b,i){ S.biz[i] = 0; });
 LIFESTYLE.forEach(function(g){ S.life[g.cat] = 0; });
 ASSETS.forEach(function(a){ S.assets[a.id] = { price: a.startPrice, held: 0, spent: 0, history: [a.startPrice] }; });
+SKILLS.forEach(function(sk){ S.skills[sk.id] = { lv: 0, endsAt: 0, dur: 0 }; });
 
 /* ================= PENYIMPANAN (localStorage) ================= */
 var SAVE_KEY = "idleLifeSaveV1";
@@ -1069,6 +1121,14 @@ function loadSavedState(){
       }
     });
     if (sv.achieved) ACHIEVEMENTS.forEach(function(ac, i){ if (sv.achieved[i]) S.achieved[i] = true; });
+    if (sv.skills) SKILLS.forEach(function(sk){
+      var ss = sv.skills[sk.id];
+      if (!ss) return;
+      var st = S.skills[sk.id];
+      if (typeof ss.lv === "number" && isFinite(ss.lv)) st.lv = Math.max(0, Math.min(SKILL_MAX, Math.floor(ss.lv)));
+      if (typeof ss.endsAt === "number" && isFinite(ss.endsAt)) st.endsAt = Math.max(0, ss.endsAt);
+      if (typeof ss.dur === "number" && isFinite(ss.dur)) st.dur = Math.max(0, ss.dur);
+    });
     if (data.lang === "en" || data.lang === "id") lang = data.lang;
     if (typeof data.savedAt === "number" && isFinite(data.savedAt)) {
       _offlineSeconds = Math.max(0, Math.floor((Date.now() - data.savedAt) / 1000));
@@ -1106,13 +1166,15 @@ function lifeBonus(){
 function lifeRegen(kind){
   var r = 0;
   LIFESTYLE.forEach(function(g){ r += g.items[S.life[g.cat]][kind]; });
+  if (kind === "happy") r += 0.03 * skillLevel("tarik");
+  if (kind === "health") r += 0.03 * skillLevel("stres");
   return r;
 }
 function needPenalty(){ return (S.health < 20 || S.happy < 20) ? 0.5 : 1; }
 function clickValue(){
   var v = JOBS[S.jobIndex].click;
   UPGRADES.forEach(function(u){ v += S.upgrades[u.id] * u.clickBonus; });
-  return v * (1 + lifeBonus()) * needPenalty();
+  return v * (1 + lifeBonus()) * needPenalty() * (1 + 0.04 * skillLevel("cerdas"));
 }
 function bizIncome(){
   var t = 0;
@@ -1132,7 +1194,7 @@ function autoTapIncome(){
   return clickValue() * autoTapRate();
 }
 function perSec(){
-  return (JOBS[S.jobIndex].salary + bizIncome() + chickenIncomeRaw()) * (1 + lifeBonus()) * needPenalty();
+  return (JOBS[S.jobIndex].salary + bizIncome() + chickenIncomeRaw()) * (1 + lifeBonus()) * needPenalty() * (1 + 0.04 * skillLevel("karisma"));
 }
 function totalPerSec(){
   return perSec() + autoTapIncome();
@@ -1263,6 +1325,84 @@ function maybeShowEvent(){
   showEvent();
 }
 $("eventCloseBtn").addEventListener("click", function(){ $("eventModal").classList.remove("open"); });
+
+/* ================= KEAHLIAN (skill latihan berjangka ala Idle Guy) ================= */
+function skillLevel(id){ var st = S.skills[id]; return st ? st.lv : 0; }
+function skillById(id){ for (var i = 0; i < SKILLS.length; i++) if (SKILLS[i].id === id) return SKILLS[i]; return null; }
+function skillTime(lv, sk){ return Math.min(4 * 3600, Math.round(sk.baseTime * Math.pow(sk.timeMult, lv))); }
+function skillCost(sk, lv){ return Math.ceil(sk.baseCost * Math.pow(sk.costMult, lv) * clickValue()); }
+function fmtDur(sec){
+  sec = Math.max(0, Math.ceil(sec));
+  var h = Math.floor(sec / 3600), m = Math.floor((sec % 3600) / 60), s = sec % 60;
+  function p(n){ return (n < 10 ? "0" : "") + n; }
+  return h > 0 ? h + ":" + p(m) + ":" + p(s) : p(m) + ":" + p(s);
+}
+function startTraining(sk){
+  var st = S.skills[sk.id];
+  if (!st || st.endsAt > 0 || st.lv >= SKILL_MAX) return;
+  var cost = skillCost(sk, st.lv);
+  if (!spend(cost)) return;
+  st.dur = skillTime(st.lv, sk);
+  st.endsAt = Date.now() + st.dur * 1000;
+  saveGame(true);
+  renderSkills();
+}
+function checkSkillTraining(){
+  var now = Date.now(), changed = false;
+  SKILLS.forEach(function(sk){
+    var st = S.skills[sk.id];
+    if (!st || !st.endsAt || st.endsAt > now) return;
+    st.endsAt = 0; st.dur = 0;
+    st.lv = Math.min(SKILL_MAX, st.lv + 1);
+    changed = true;
+    toast("🧠", tr("skillUpToast", { id: sk.id, lv: st.lv }));
+    logKey("skillUpLog", { id: sk.id, lv: st.lv });
+  });
+  if (changed) { updateHUD(); saveGame(true); renderSkills(); }
+  else updateSkillTimers();
+}
+function updateSkillTimers(){
+  var now = Date.now();
+  SKILLS.forEach(function(sk){
+    var st = S.skills[sk.id];
+    var tEl = $("skill-time-" + sk.id), pEl = $("skill-prog-" + sk.id);
+    if (!st || !tEl || !pEl) return;
+    if (!st.endsAt) { tEl.textContent = ""; pEl.style.width = "0%"; return; }
+    var remain = Math.max(0, (st.endsAt - now) / 1000);
+    tEl.textContent = tr("skillTraining") + " " + fmtDur(remain);
+    pEl.style.width = Math.min(100, Math.max(0, (1 - remain / st.dur) * 100)) + "%";
+  });
+}
+function renderSkills(){
+  var wrap = $("skillCards");
+  if (!wrap) return;
+  wrap.innerHTML = "";
+  SKILLS.forEach(function(sk){
+    var st = S.skills[sk.id] || { lv: 0, endsAt: 0, dur: 0 };
+    var training = st.endsAt > 0;
+    var maxed = st.lv >= SKILL_MAX;
+    var cost = skillCost(sk, st.lv);
+    var card = document.createElement("div");
+    card.className = "card" + (training ? " owned" : "");
+    card.innerHTML =
+      '<div class="card-top"><div class="card-ico">' + sk.icon + '</div>' +
+      '<div><h3>' + LName(sk) + '</h3><p class="desc">' + LDesc(sk) + '</p></div>' +
+      '<span class="badge">Lv. ' + st.lv + '</span></div>' +
+      (training
+        ? '<div class="skill-prog"><div id="skill-prog-' + sk.id + '"></div></div><div class="skill-time" id="skill-time-' + sk.id + '"></div>'
+        : '') +
+      (maxed
+        ? '<button class="buy-btn secondary" type="button" disabled>' + tr("skillMax") + '</button>'
+        : (training
+          ? '<button class="buy-btn secondary" type="button" disabled>' + tr("skillTraining") + '</button>'
+          : '<button class="buy-btn" type="button">' + tr("skillTrainBtn") + ' — ' + fmt(cost) + '</button>'));
+    var btn = card.querySelector(".buy-btn:not(:disabled)");
+    if (btn) btn.addEventListener("click", function(){ startTraining(sk); });
+    wrap.appendChild(card);
+  });
+  updateSkillTimers();
+}
+setInterval(checkSkillTraining, 1000);
 
 /* ================= RENDER: STATIC LISTS ================= */
 function renderEducation(){
@@ -1529,20 +1669,22 @@ function sellAsset(id){
   refreshLists();
 }
 function refreshLists(){
-  renderEducation(); renderJobs(); renderUpgrades(); renderLife(); renderBiz(); renderAssets(); renderFarm();
+  renderEducation(); renderJobs(); renderUpgrades(); renderLife(); renderBiz(); renderAssets(); renderFarm(); renderSkills();
   saveGame(false);
 }
 
 /* ================= TAP ================= */
 $("tapBtn").addEventListener("click", function(ev){
   var gain = clickValue();
+  var crit = skillLevel("hoki") > 0 && Math.random() < 0.02 * skillLevel("hoki");
+  if (crit) gain *= 2;
   S.money += gain; S.totalEarned += gain; S.clicks++;
-  S.health = Math.max(0, S.health - 0.06);
+  S.health = Math.max(0, S.health - 0.06 * Math.max(0.1, 1 - 0.1 * skillLevel("tahan")));
   S.happy = Math.max(0, S.happy - 0.03);
   var layer = $("floatLayer");
   var num = document.createElement("span");
   num.className = "float-num";
-  num.textContent = "+" + fmt(gain);
+  num.textContent = "+" + fmt(gain) + (crit ? " ✨" : "");
   var box = document.querySelector(".stage").getBoundingClientRect();
   var x = ev.clientX ? (ev.clientX - box.left) : box.width / 2;
   num.style.left = Math.max(8, Math.min(box.width - 90, x - 30)) + "px";
@@ -1596,6 +1738,7 @@ $("confirmReset").addEventListener("click", function(){
   BUSINESSES.forEach(function(b,i){ S.biz[i] = 0; });
   LIFESTYLE.forEach(function(g){ S.life[g.cat] = 0; });
   ASSETS.forEach(function(a){ S.assets[a.id] = { price: a.startPrice, held: 0, spent: 0, history: [a.startPrice] }; });
+  SKILLS.forEach(function(sk){ S.skills[sk.id] = { lv: 0, endsAt: 0, dur: 0 }; });
   setTapLabel();
   LOG.length = 0;
   logKey("resetLog");
