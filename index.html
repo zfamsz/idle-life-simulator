@@ -310,6 +310,9 @@
   .modal-row button{flex:1;border-radius:12px;font-weight:800;font-size:14px;padding:11px}
   .btn-danger{background:var(--red);color:#fff;border:0}
   .btn-ghost{background:var(--surface-2);color:var(--ink);border:1px solid var(--line)}
+  .event-choice{display:block;width:100%;text-align:left;background:var(--surface-2);color:var(--ink);border:1px solid var(--line);border-radius:12px;font-weight:700;font-size:14px;padding:12px;cursor:pointer}
+  .event-choice:disabled{opacity:.45;cursor:not-allowed}
+  .event-choice small{display:block;font-weight:600;font-size:12px;color:var(--ink-2);margin-top:3px}
 </style>
 </head>
 <body>
@@ -549,6 +552,18 @@
   </div>
 </div>
 
+<!-- ===== Peristiwa (event acak ala Idle Guy) ===== -->
+<div class="modal-back" id="eventModal">
+  <div class="modal" role="dialog" aria-modal="true" aria-labelledby="eventTitle">
+    <h3 id="eventTitle">🎲 Peristiwa!</h3>
+    <p id="eventText"></p>
+    <div id="eventChoices" style="display:flex;flex-direction:column;gap:8px"></div>
+    <div class="modal-row" id="eventCloseRow" style="display:none;margin-top:12px">
+      <button class="btn-ghost" id="eventCloseBtn" type="button" data-i18n="eventClose">Tutup</button>
+    </div>
+  </div>
+</div>
+
 <script>
 "use strict";
 /* ================= DATA ================= */
@@ -649,6 +664,110 @@ var ACHIEVEMENTS = [
   { at: 250000,    text: "Seperempat juta dolar dihasilkan seumur hidup (di game ini).", text_en: "A quarter of a million dollars earned in a lifetime (in this game)." },
   { at: 10000000,  text: "Dua digit juta! Kamu resmi masuk klub orang kaya beneran.", text_en: "Double-digit millions! You're officially in the real rich people's club." },
   { at: 1000000000,text: "SATU MILIAR total penghasilan. Legenda jalanan jadi legenda beneran.", text_en: "ONE BILLION in total earnings. A street legend becomes a real legend." }
+];
+
+/* ============ PERISTIWA (event acak ala Idle Guy) ============ */
+/* Muncul berkala sebagai popup: cerita hidup + 3 pilihan, tiap pilihan
+   berdampak ke uang / kebahagiaan / kesehatan. Uang (m) dihitung dalam
+   satuan bayaran per ketuk supaya tetap relevan di semua tier.
+   hp = kebahagiaan, hl = kesehatan (poin, bisa negatif). */
+var EVENTS = [
+  { id: "neighbor", icon: "🏠", title: "Tetangga Mencurigakan", title_en: "Suspicious Neighbour",
+    text: "Tetangga di townhouse sebelah sangat mencurigakan. Asap tipis beraroma manis kadang masuk ke halamanmu. Kamu harus membangun hubungan baik dengannya.",
+    text_en: "The neighbour in the townhouse next door is very suspicious. Thin, sweet-smelling smoke sometimes drifts into your yard. You should build a good relationship with him.",
+    choices: [
+      { label: "Beri piringan hitam Bob Marley", label_en: "Give him a Bob Marley vinyl", m: 0, hp: 12, hl: 0, result: "Dia langsung memutar piringannya keras-keras. Kalian jadi akrab semalaman.", result_en: "He immediately plays the record out loud. You two become good friends overnight." },
+      { label: "Undang dia ke pestamu", label_en: "Invite him to your party", m: -10, hp: 8, hl: 2, result: "Pestanya seru! Dia membawa teman-temannya, dan kamu dapat banyak kenalan baru.", result_en: "The party is great! He brings his friends, and you meet lots of new people." },
+      { label: "Beri lilin beraroma", label_en: "Give him a scented candle", m: -6, hp: 6, hl: 4, result: "Dia suka lilinnya. Asap manis itu akhirnya berhenti masuk ke halamanmu.", result_en: "He loves the candle. The sweet smoke finally stops drifting into your yard." }
+    ] },
+  { id: "wallet", icon: "👛", title: "Dompet Jatuh", title_en: "Dropped Wallet",
+    text: "Di jalan kamu menemukan dompet berisi uang tunai. Tidak ada yang melihat.",
+    text_en: "On the street you find a wallet full of cash. Nobody is watching.",
+    choices: [
+      { label: "Kembalikan ke pemiliknya", label_en: "Return it to the owner", m: 0, hp: 10, hl: 0, result: "Pemiliknya sangat berterima kasih dan memberimu hadiah kecil. Hati tenang.", result_en: "The owner is very grateful and gives you a small reward. Your conscience is clear." },
+      { label: "Ambil uangnya", label_en: "Keep the money", m: 25, hp: -8, hl: 0, result: "Kamu dapat uang cepat, tapi rasa bersalah mengikutimu seharian.", result_en: "You get quick cash, but guilt follows you all day." },
+      { label: "Cari pemiliknya lewat medsos", label_en: "Find the owner on social media", m: 6, hp: 6, hl: 0, result: "Postinganmu viral kecil-kecilan. Pemiliknya datang dan memberimu imbalan.", result_en: "Your post goes a little bit viral. The owner shows up and rewards you." }
+    ] },
+  { id: "rain", icon: "🌧️", title: "Hujan Deras", title_en: "Heavy Rain",
+    text: "Hujan deras tiba-tiba. Seorang pengemudi ojek payung menawarkan tumpangan pulang.",
+    text_en: "Heavy rain suddenly pours down. An umbrella-taxi driver offers you a ride home.",
+    choices: [
+      { label: "Naik ojek payung", label_en: "Take the umbrella taxi", m: -4, hp: 4, hl: 6, result: "Kamu sampai rumah kering dan hangat.", result_en: "You get home dry and warm." },
+      { label: "Jalan kaki menerobos hujan", label_en: "Walk through the rain", m: 0, hp: -4, hl: -8, result: "Kamu basah kuyup dan bersin-bersin keesokan harinya.", result_en: "You get soaked and sneeze all the next day." },
+      { label: "Berteduh sambil jualan payung", label_en: "Shelter and sell umbrellas", m: 12, hp: 2, hl: 0, result: "Kamu menjual payung cadanganmu ke orang yang kehujanan. Lumayan!", result_en: "You sell your spare umbrella to people caught in the rain. Nice!" }
+    ] },
+  { id: "lottery", icon: "🎰", title: "Tawaran Investasi", title_en: "Investment Offer",
+    text: "Teman lama menawarimu 'investasi pasti untung 200% sebulan'. Katanya cuma butuh modal sekarang.",
+    text_en: "An old friend offers you an 'investment guaranteed to profit 200% a month'. He just needs your money now.",
+    choices: [
+      { label: "Tolak halus-halus", label_en: "Decline politely", m: 0, hp: 2, hl: 0, result: "Kamu selamat dari skema bodong. Temanmu agak kesal, tapi ya sudahlah.", result_en: "You escape a scam scheme. Your friend is a bit annoyed, but oh well." },
+      { label: "Ikut dengan modal kecil", label_en: "Join with a small amount", m: -20, hp: -6, hl: 0, result: "Uangmu hilang. Temanmu menghilang. Pelajaran mahal.", result_en: "Your money is gone. Your friend is gone. An expensive lesson." },
+      { label: "Ajak dia investasi yang jelas", label_en: "Invite him to a real investment", m: 10, hp: 6, hl: 0, result: "Kalian akhirnya buka usaha kecil bareng. Ternyata jalan!", result_en: "You end up starting a small business together. It actually works!" }
+    ] },
+  { id: "cat", icon: "🐱", title: "Kucing Liar", title_en: "Stray Cat",
+    text: "Seekor kucing liar kurus mengikutimu pulang sambil mengeong. Matanya memelas.",
+    text_en: "A skinny stray cat follows you home, meowing. Its eyes are pleading.",
+    choices: [
+      { label: "Beri makan", label_en: "Feed it", m: -3, hp: 10, hl: 0, result: "Kucing itu makan lahap lalu tidur di terasmu. Gemas.", result_en: "The cat eats heartily, then sleeps on your porch. Adorable." },
+      { label: "Adopsi jadi peliharaan", label_en: "Adopt it as a pet", m: -8, hp: 14, hl: 2, result: "Kamu menamainya Mochi. Sekarang ada yang menunggumu di rumah.", result_en: "You name it Mochi. Now someone waits for you at home." },
+      { label: "Abaikan saja", label_en: "Ignore it", m: 0, hp: -6, hl: 0, result: "Meongnya terdengar sampai jauh. Kamu kepikiran semalaman.", result_en: "Its meowing echoes far away. You keep thinking about it all night." }
+    ] },
+  { id: "friend", icon: "🤝", title: "Teman Lama", title_en: "Old Friend",
+    text: "Teman SMA-mu yang sekarang jadi pengusaha sukses mengajakmu makan siang dan menawarkan kerja sama.",
+    text_en: "Your high-school friend, now a successful entrepreneur, invites you to lunch and offers a partnership.",
+    choices: [
+      { label: "Terima kerja samanya", label_en: "Accept the partnership", m: 18, hp: 8, hl: 0, result: "Proyek pertamanya langsung untung. Networking memang penting.", result_en: "The first project immediately profits. Networking really matters." },
+      { label: "Minta waktu pikir-pikir", label_en: "Ask for time to think", m: 0, hp: 2, hl: 0, result: "Kamu pulang dengan kartu namanya. Peluang masih terbuka.", result_en: "You go home with his business card. The opportunity is still open." },
+      { label: "Tolak, fokus jalanku sendiri", label_en: "Decline, focus on my own path", m: 0, hp: -2, hl: 2, result: "Kamu tetap pada rencanamu. Tidak ada yang salah dengan itu.", result_en: "You stick to your plan. Nothing wrong with that." }
+    ] },
+  { id: "phone", icon: "📱", title: "HP Retak", title_en: "Cracked Phone",
+    text: "HP-mu jatuh dan layarnya retak. Masih bisa dipakai, tapi risih dilihat.",
+    text_en: "Your phone falls and the screen cracks. It still works, but it is annoying to look at.",
+    choices: [
+      { label: "Servis di konter", label_en: "Repair it at a shop", m: -12, hp: 6, hl: 0, result: "Layar mulus lagi. Harganya masuk akal.", result_en: "The screen is smooth again. The price is fair." },
+      { label: "Beli HP baru", label_en: "Buy a new phone", m: -40, hp: 10, hl: 0, result: "HP baru, kamera jernih, semua lancar. Dompetmu menjerit sedikit.", result_en: "New phone, clear camera, everything smooth. Your wallet screams a little." },
+      { label: "Biarin saja, yang penting jalan", label_en: "Leave it, it still works", m: 0, hp: -4, hl: 0, result: "Retaknya makin menyebar. Kamu pura-pura tidak lihat.", result_en: "The crack keeps spreading. You pretend not to see it." }
+    ] },
+  { id: "gym", icon: "💪", title: "Promo Gym", title_en: "Gym Promo",
+    text: "Gym dekat rumah lagi promo: daftar sekarang, gratis 3 bulan pertama. Badanmu memang sudah lama minta olahraga.",
+    text_en: "The gym near your home has a promo: sign up now, first 3 months free. Your body has been asking for exercise for a while.",
+    choices: [
+      { label: "Daftar sekarang", label_en: "Sign up now", m: -8, hp: 6, hl: 12, result: "Badanmu mulai terasa lebih segar. Ototmu berterima kasih.", result_en: "Your body starts feeling fresher. Your muscles thank you." },
+      { label: "Olahraga sendiri di rumah", label_en: "Work out at home", m: 0, hp: 4, hl: 8, result: "Push-up dan lari pagi. Gratis, dan hasilnya lumayan.", result_en: "Push-ups and morning runs. Free, and the results are decent." },
+      { label: "Nanti saja, masih mager", label_en: "Later, still lazy", m: 0, hp: -2, hl: -4, result: "Sofa memang menggoda. Badanmu protes pelan-pelan.", result_en: "The sofa is tempting. Your body protests quietly." }
+    ] },
+  { id: "food", icon: "🍜", title: "Gerobak Viral", title_en: "Viral Food Cart",
+    text: "Gerobak makanan di ujung jalan lagi viral di medsos. Antreannya panjang sekali.",
+    text_en: "The food cart at the end of the street is going viral on social media. The queue is very long.",
+    choices: [
+      { label: "Ikut antre dan coba", label_en: "Join the queue and try it", m: -5, hp: 8, hl: 2, result: "Rasanya memang juara. Pantas viral.", result_en: "The taste really is the best. No wonder it went viral." },
+      { label: "Beli buat dijual lagi", label_en: "Buy to resell", m: 15, hp: 2, hl: 0, result: "Kamu beli 10 porsi dan jual lagi ke teman-teman. Laris!", result_en: "You buy 10 portions and resell them to friends. They sell out!" },
+      { label: "Lewatin saja, hemat dulu", label_en: "Skip it, save money", m: 0, hp: -3, hl: 2, result: "Perutmu bunyi, tapi tabunganmu aman.", result_en: "Your stomach rumbles, but your savings are safe." }
+    ] },
+  { id: "charity", icon: "🎗️", title: "Galang Dana", title_en: "Fundraiser",
+    text: "Tetangga menggalang dana untuk anak yatim di kampung sebelah. Mereka mengetuk pintumu.",
+    text_en: "Neighbours are raising funds for orphans in the next village. They knock on your door.",
+    choices: [
+      { label: "Sumbang seikhlasnya", label_en: "Donate what you can", m: -8, hp: 12, hl: 0, result: "Senyum mereka bikin harimu hangat.", result_en: "Their smiles warm your whole day." },
+      { label: "Sumbang besar-besaran", label_en: "Donate big", m: -25, hp: 16, hl: 2, result: "Namamu ditulis di papan donatur. Kamu merasa jadi orang baik beneran.", result_en: "Your name goes on the donor board. You feel like a genuinely good person." },
+      { label: "Bantu tenaga saja", label_en: "Help with labour instead", m: 0, hp: 8, hl: -2, result: "Kamu bantu angkat-angkat barang sampai sore. Capek, tapi puas.", result_en: "You help carry things until evening. Tired, but satisfied." }
+    ] },
+  { id: "tire", icon: "🛞", title: "Ban Bocor", title_en: "Flat Tire",
+    text: "Di tengah jalan, ban kendaraanmu bocor. Bengkel terdekat 2 km lagi.",
+    text_en: "In the middle of the road, your tire goes flat. The nearest workshop is 2 km away.",
+    choices: [
+      { label: "Ganti ban sendiri", label_en: "Change the tire yourself", m: 0, hp: 4, hl: -6, result: "Tanganmu kotor, tapi kamu berhasil. Skill baru!", result_en: "Your hands get dirty, but you succeed. New skill!" },
+      { label: "Panggil montir panggilan", label_en: "Call a mobile mechanic", m: -10, hp: 4, hl: 2, result: "Montir datang cepat. Kamu tinggal duduk manis.", result_en: "The mechanic arrives fast. You just sit back." },
+      { label: "Dorong sampai bengkel", label_en: "Push it to the workshop", m: 0, hp: -6, hl: -10, result: "Dua kilometer mendorong di terik matahari. Kakimu gemetar.", result_en: "Two kilometres of pushing under the blazing sun. Your legs tremble." }
+    ] },
+  { id: "sidejob", icon: "💼", title: "Kerja Sampingan", title_en: "Side Job",
+    text: "Seseorang menawarimu kerja sampingan akhir pekan: jaga stan di pasar malam. Bayarannya lumayan.",
+    text_en: "Someone offers you a weekend side job: minding a stall at the night market. The pay is decent.",
+    choices: [
+      { label: "Ambil kerjaannya", label_en: "Take the job", m: 22, hp: -4, hl: -6, result: "Akhir pekanmu padat, tapi kantongmu tebal.", result_en: "Your weekend is packed, but your wallet is thick." },
+      { label: "Tawar bayaran lebih tinggi", label_en: "Negotiate higher pay", m: 14, hp: 2, hl: -2, result: "Dia setuju naik sedikit. Negosiasi berhasil!", result_en: "He agrees to a little more. Negotiation successful!" },
+      { label: "Tolak, akhir pekan buat istirahat", label_en: "Decline, weekends are for rest", m: 0, hp: 6, hl: 6, result: "Kamu tidur siang panjang. Seninmu segar.", result_en: "You take a long afternoon nap. Your Monday feels fresh." }
+    ] }
 ];
 
 /* ============ AYAM & AUTO-KETUK (aktivitas awal) ============ */
@@ -824,6 +943,8 @@ var I18N = {
   welcomeBackLog: { id: "👋 <b>Selamat datang kembali!</b> Progresmu dimuat dari simpanan di browser ini.", en: "👋 <b>Welcome back!</b> Your progress was loaded from this browser's save." },
   offlineLog: { id: function(n){ return "💰 Selama kamu pergi, ayam, bisnis & auto-ketukmu menghasilkan <b>" + fmt(n) + "</b>."; }, en: function(n){ return "💰 While you were away, your chickens, businesses & auto-tap earned <b>" + fmt(n) + "</b>."; } },
   firstStartLog: { id: "🧎 <b>Kamu terbangun di emperan toko</b> dengan $0 di kantong — tapi kamu punya 3 ekor ayam. Telurnya sudah mulai terjual sendiri.", en: "🧎 <b>You wake up in a shop doorway</b> with $0 in your pocket — but you have 3 chickens. Their eggs are already selling themselves." },
+  eventClose: { id: "Tutup", en: "Close" },
+  eventDoneLog: { id: function(a){ var ev = eventById(a.ev); var ch = ev && ev.choices[a.ch]; return "🎲 <b>" + (ev ? ev.title : a.ev) + "</b> — " + (ch ? ch.result : ""); }, en: function(a){ var ev = eventById(a.ev); var ch = ev && ev.choices[a.ch]; return "🎲 <b>" + (ev ? ev.title_en : a.ev) + "</b> — " + (ch ? ch.result_en : ""); } },
   welcomeBackOffline: { id: function(a){ return "Selamat datang kembali! Selama kamu pergi, ayam, bisnis & auto-ketukmu menghasilkan " + a + "."; }, en: function(a){ return "Welcome back! While you were away, your chickens, businesses & auto-tap earned " + a + "."; } },
   welcomeBack: { id: "Selamat datang kembali! Progresmu lanjut dari posisi terakhir.", en: "Welcome back! Your progress continues from where you left off." },
   welcomeNew: { id: "Selamat datang di Idle Life! 3 ayammu sudah bertelur & telurnya terjual otomatis — ketuk tombol emasnya buat cari uang tambahan.", en: "Welcome to Idle Life! Your 3 chickens are already laying eggs & the eggs sell automatically — tap the golden button to earn extra money." },
@@ -883,7 +1004,8 @@ function freshState(){
     eduIndex: -1, jobIndex: 0,
     chickens: CHICKEN.startCount, autoTap: 0,
     upgrades: {}, biz: {}, life: {},
-    assets: {}, achieved: {}, lastTier: 0
+    assets: {}, achieved: {}, lastTier: 0,
+    lastEventAt: Date.now(), eventsSeen: {}
   };
 }
 S = freshState();
@@ -928,6 +1050,9 @@ function loadSavedState(){
     S.chickens = Math.max(0, Math.min(9999, Math.floor(num(sv.chickens, S.chickens))));
     S.autoTap = Math.max(0, Math.min(AUTOTAP.maxLevel, Math.floor(num(sv.autoTap, S.autoTap))));
     S.lastTier = Math.max(0, Math.min(TIERS.length - 1, Math.floor(num(sv.lastTier, S.lastTier))));
+    /* Simpanan lama belum punya peristiwa: pertahankan nilai awal (jam sekarang, belum ada yang terlihat) */
+    if (typeof sv.lastEventAt === "number" && isFinite(sv.lastEventAt)) S.lastEventAt = Math.max(0, sv.lastEventAt);
+    if (sv.eventsSeen) EVENTS.forEach(function(ev){ if (typeof sv.eventsSeen[ev.id] === "number" && isFinite(sv.eventsSeen[ev.id])) S.eventsSeen[ev.id] = Math.max(0, Math.floor(sv.eventsSeen[ev.id])); });
     if (sv.upgrades) UPGRADES.forEach(function(u){ if (typeof sv.upgrades[u.id] === "number" && isFinite(sv.upgrades[u.id])) S.upgrades[u.id] = Math.max(0, Math.floor(sv.upgrades[u.id])); });
     if (sv.biz) BUSINESSES.forEach(function(b, i){ if (typeof sv.biz[i] === "number" && isFinite(sv.biz[i])) S.biz[i] = Math.max(0, Math.floor(sv.biz[i])); });
     if (sv.life) LIFESTYLE.forEach(function(g){ if (typeof sv.life[g.cat] === "number" && isFinite(sv.life[g.cat])) S.life[g.cat] = Math.max(0, Math.min(g.items.length - 1, Math.floor(sv.life[g.cat]))); });
@@ -1044,6 +1169,100 @@ function renderLog(){
   if (!list) return;
   list.innerHTML = LOG.map(function(e){ return "<li>" + tr(e.k, e.a) + "</li>"; }).join("");
 }
+
+/* ================= PERISTIWA (event acak ala Idle Guy) ================= */
+var _eventOpen = false;
+var _currentEvent = null;
+var _lastEventId = null;
+var _nextEventIn = 75000 + Math.random() * 60000; /* jeda antar peristiwa: 75–135 dtk */
+
+function eventById(id){
+  for (var i = 0; i < EVENTS.length; i++) if (EVENTS[i].id === id) return EVENTS[i];
+  return null;
+}
+function eventText(obj, key){
+  var v = obj[key + "_en"];
+  return (lang === "en" && v) ? v : obj[key];
+}
+function effectHint(ch){
+  var parts = [];
+  var money = ch.m * clickValue();
+  if (money > 0) parts.push("+" + fmt(money));
+  else if (money < 0) parts.push("−" + fmt(-money));
+  if (ch.hp > 0) parts.push("😊 +" + ch.hp);
+  else if (ch.hp < 0) parts.push("😊 −" + (-ch.hp));
+  if (ch.hl > 0) parts.push("❤️ +" + ch.hl);
+  else if (ch.hl < 0) parts.push("❤️ −" + (-ch.hl));
+  return parts.join(" · ");
+}
+function pickEvent(){
+  var pool = EVENTS.filter(function(ev){ return ev.id !== _lastEventId; });
+  if (!pool.length) pool = EVENTS.slice();
+  var minSeen = Infinity;
+  pool.forEach(function(ev){ var n = S.eventsSeen[ev.id] || 0; if (n < minSeen) minSeen = n; });
+  var least = pool.filter(function(ev){ return (S.eventsSeen[ev.id] || 0) === minSeen; });
+  var ev = least[Math.floor(Math.random() * least.length)];
+  _lastEventId = ev.id;
+  return ev;
+}
+function showEvent(id){
+  var ev = id ? eventById(id) : pickEvent();
+  if (!ev) return;
+  _eventOpen = true;
+  _currentEvent = ev;
+  $("eventTitle").textContent = (ev.icon ? ev.icon + " " : "") + eventText(ev, "title");
+  $("eventText").textContent = eventText(ev, "text");
+  $("eventCloseRow").style.display = "none";
+  var wrap = $("eventChoices");
+  wrap.innerHTML = "";
+  ev.choices.forEach(function(ch, i){
+    var cost = ch.m < 0 ? -ch.m * clickValue() : 0;
+    var b = document.createElement("button");
+    b.type = "button";
+    b.className = "event-choice";
+    var lab = document.createElement("span");
+    lab.textContent = eventText(ch, "label");
+    b.appendChild(lab);
+    var hint = effectHint(ch);
+    if (hint) {
+      var sm = document.createElement("small");
+      sm.textContent = hint;
+      b.appendChild(sm);
+    }
+    if (cost > 0 && S.money < cost) b.disabled = true;
+    b.addEventListener("click", function(){ chooseEvent(ev, i); });
+    wrap.appendChild(b);
+  });
+  $("eventModal").classList.add("open");
+}
+function chooseEvent(ev, idx){
+  var ch = ev.choices[idx];
+  var gain = ch.m * clickValue();
+  S.money = Math.max(0, S.money + gain);
+  if (gain > 0) S.totalEarned += gain;
+  S.happy = Math.max(0, Math.min(100, S.happy + (ch.hp || 0)));
+  S.health = Math.max(0, Math.min(100, S.health + (ch.hl || 0)));
+  S.eventsSeen[ev.id] = (S.eventsSeen[ev.id] || 0) + 1;
+  S.lastEventAt = Date.now();
+  _nextEventIn = 75000 + Math.random() * 60000;
+  _eventOpen = false;
+  $("eventTitle").textContent = (ev.icon ? ev.icon + " " : "") + eventText(ev, "title");
+  $("eventText").textContent = eventText(ch, "result");
+  $("eventChoices").innerHTML = "";
+  $("eventCloseRow").style.display = "";
+  logKey("eventDoneLog", { ev: ev.id, ch: idx });
+  updateHUD();
+  saveGame(true);
+}
+function maybeShowEvent(){
+  if (_eventOpen) return;
+  if ($("resetModal").classList.contains("open")) return;
+  if (document.visibilityState !== "visible") return;
+  if (Date.now() - S.startTime < 60000) return;
+  if (Date.now() - S.lastEventAt < _nextEventIn) return;
+  showEvent();
+}
+$("eventCloseBtn").addEventListener("click", function(){ $("eventModal").classList.remove("open"); });
 
 /* ================= RENDER: STATIC LISTS ================= */
 function renderEducation(){
@@ -1606,6 +1825,7 @@ setInterval(function(){
   S.health = Math.max(0, Math.min(100, S.health + lifeRegen("health") * 0.1 - 0.012));
   S.happy = Math.max(0, Math.min(100, S.happy + lifeRegen("happy") * 0.1 - 0.010));
   updateHUD();
+  maybeShowEvent();
 }, 100);
 
 /* Market movement */
